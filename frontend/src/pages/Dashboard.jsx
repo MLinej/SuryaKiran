@@ -1,0 +1,86 @@
+import { useState, useEffect } from "react";
+import { api } from "../services/api";
+
+import { PlantOutputWidget } from "../components/dashboard/PlantOutputWidget";
+import { RiskGaugeWidget } from "../components/dashboard/RiskGaugeWidget";
+import { AlertsWidget } from "../components/dashboard/AlertsWidget";
+import { SolarPlantMap } from "../components/dashboard/SolarPlantMap";
+import { AIInsightsFeed } from "../components/dashboard/AIInsightsFeed";
+import { InverterTable } from "../components/dashboard/InverterTable";
+
+export default function Dashboard() {
+    const [summary, setSummary] = useState(null);
+    const [inverters, setInverters] = useState([]);
+    const [alerts, setAlerts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            setLoading(true);
+            const [sumData, invData, alertsData] = await Promise.all([
+                api.getFleetSummary(),
+                api.getInverters(),
+                api.getAlerts()
+            ]);
+            setSummary(sumData);
+            setInverters(invData);
+            setAlerts(alertsData);
+            setLoading(false);
+        }
+        fetchData();
+    }, []);
+
+    // Derived stats for UI
+    // Mock risk level: a simple calc based on high risk inverters vs total, scaled for visual effect.
+    // In reality, this would come from a plant-level ML score endpoint.
+    const riskLevel = summary ? Math.min(100, Math.round(((summary.highRisk * 15 + summary.mediumRisk * 5) / summary.totalInverters) * 100)) : 0;
+
+    const alertStats = {
+        total: alerts.length,
+        critical: alerts.filter(a => a.severity === 'Critical').length,
+        warning: alerts.filter(a => a.severity === 'Warning').length,
+        info: alerts.filter(a => a.severity === 'Info').length
+    };
+
+    return (
+        <div style={{ animation: "fadeSlideIn 0.4s ease", paddingBottom: 40 }}>
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+                <div>
+                    <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>Operations Control Room</h1>
+                    <p style={{ color: "#64748b", fontSize: 14 }}>Real-time telemetry and predictive ML assessments.</p>
+                </div>
+            </div>
+
+            {loading ? (
+                <div style={{ padding: 60, textAlign: "center", color: "#64748b" }}>Loading telemetry data...</div>
+            ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+                    {/* TOP SECTION: SYSTEM OVERVIEW */}
+                    <div style={{ display: "flex", gap: 24, flexWrap: "wrap", minHeight: 180 }}>
+                        <PlantOutputWidget output={summary?.totalPower} />
+                        <RiskGaugeWidget riskLevel={riskLevel || 32} />
+                        <AlertsWidget alerts={alertStats} />
+                    </div>
+
+                    {/* CENTER SECTION: SOLAR PLANT MAP (MAIN VISUALIZATION) */}
+                    <div style={{ display: "flex", height: 400 }}>
+                        <SolarPlantMap inverters={inverters} />
+                    </div>
+
+                    {/* BOTTOM SECTION: OPERATIONS PANEL */}
+                    <div style={{ display: "flex", gap: 24, flexWrap: "wrap", minHeight: 500 }}>
+                        <div style={{ flex: "1 1 350px", display: "flex" }}>
+                            <AIInsightsFeed />
+                        </div>
+                        <div style={{ flex: "2 1 600px", display: "flex", overflow: "hidden" }}>
+                            <InverterTable inverters={inverters} />
+                        </div>
+                    </div>
+
+                </div>
+            )}
+        </div>
+    );
+}
