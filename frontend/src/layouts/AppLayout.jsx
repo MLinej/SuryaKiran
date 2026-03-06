@@ -1,14 +1,26 @@
-import { Link, useLocation, Outlet } from "react-router-dom";
-import { Copy, Activity, AlertTriangle, MessageSquare, BarChart2 } from "lucide-react";
+import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
+import { Copy, Activity, AlertTriangle, MessageSquare, BarChart2, LogOut, Wrench, Zap, FileText } from "lucide-react";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 export default function AppLayout() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user, logout } = useContext(AuthContext);
+
+    const handleLogout = () => {
+        logout();
+        navigate("/");
+    };
 
     const navItems = [
         { path: "/dashboard", label: "Dashboard", icon: <Activity className="w-5 h-5" /> },
-        { path: "/alerts", label: "Alerts", icon: <AlertTriangle className="w-5 h-5" /> },
+        { path: "/inverter", label: "Inverters", icon: <Activity className="w-5 h-5" /> },
         { path: "/copilot", label: "AI Copilot", icon: <MessageSquare className="w-5 h-5" /> },
-        { path: "/analytics", label: "Analytics", icon: <BarChart2 className="w-5 h-5" /> },
+        { path: "/alerts", label: "Alerts", icon: <AlertTriangle className="w-5 h-5" /> },
+        { path: "/maintenance", label: "Maintenance", icon: <Wrench className="w-5 h-5" /> },
+        { path: "/energy", label: "Energy Impact", icon: <Zap className="w-5 h-5" /> },
+        { path: "/reports", label: "Reports", icon: <FileText className="w-5 h-5" /> },
     ];
 
     return (
@@ -44,7 +56,7 @@ export default function AppLayout() {
                     })}
                 </nav>
 
-                <div style={{ marginTop: "auto", padding: "0 16px" }}>
+                <div style={{ marginTop: "auto", padding: "0 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
                     <Link to="/" style={{
                         display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
                         borderRadius: 12, textDecoration: "none",
@@ -53,6 +65,14 @@ export default function AppLayout() {
                         <Copy className="w-5 h-5" style={{ color: "#64748b" }} />
                         Back to Site
                     </Link>
+                    <button onClick={handleLogout} style={{
+                        display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+                        borderRadius: 12, border: "none", background: "transparent", cursor: "pointer",
+                        color: "#94a3b8", fontWeight: 500, transition: "all 0.2s", textAlign: "left"
+                    }}>
+                        <LogOut className="w-5 h-5" style={{ color: "#64748b" }} />
+                        Logout
+                    </button>
                 </div>
             </aside>
 
@@ -66,10 +86,12 @@ export default function AppLayout() {
                 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                         <div style={{ textAlign: "right", lineHeight: 1.2 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Plant Admin</div>
-                            <div style={{ fontSize: 12, color: "#64748b" }}>Rajesh Mehta</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Plant {user?.role === 'admin' ? 'Admin' : 'Operator'}</div>
+                            <div style={{ fontSize: 12, color: "#64748b" }}>{user?.name || 'User'}</div>
                         </div>
-                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#f1f5f9", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#0f172a" }}>RM</div>
+                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#f1f5f9", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+                            {user?.name ? user.name.substring(0, 2).toUpperCase() : 'US'}
+                        </div>
                     </div>
                 </header>
 
