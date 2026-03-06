@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Wrench, CheckCircle, Clock, AlertTriangle, PlayCircle, Eye } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../services/api';
 
 export default function Maintenance() {
     const [tasks, setTasks] = useState([]);
@@ -11,8 +11,8 @@ export default function Maintenance() {
     const fetchTasks = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('http://localhost:5000/api/maintenance');
-            setTasks(response.data);
+            const data = await api.getMaintenance();
+            setTasks(data);
         } catch (error) {
             console.error("Failed to load maintenance tasks", error);
         } finally {
@@ -29,7 +29,7 @@ export default function Maintenance() {
             const resolutionNotes = newStatus === 'Resolved'
                 ? window.prompt('Add resolution notes (optional):') || undefined
                 : undefined;
-            await axios.put(`http://localhost:5000/api/maintenance/${id}`, { status: newStatus, resolution_notes: resolutionNotes });
+            await api.updateMaintenance(id, { status: newStatus, resolution_notes: resolutionNotes });
             fetchTasks(); // Refresh list after update
         } catch (error) {
             console.error("Failed to update status", error);
@@ -162,3 +162,5 @@ export default function Maintenance() {
         </div>
     );
 }
+
+

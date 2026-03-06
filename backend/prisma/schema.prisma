@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Inverters {
@@ -46,13 +46,23 @@ model Telemetry {
 }
 
 model Predictions {
-  id          String    @id @default(uuid())
-  inverter_id String
-  risk_score  Float
-  risk_level  String
-  explanation String
-  created_at  DateTime  @default(now())
-  Inverter    Inverters @relation(fields: [inverter_id], references: [id])
+  id             String    @id @default(uuid())
+  inverter_id    String
+  risk_score     Float
+  risk_level     String
+  explanation    String
+  current_status String?
+  current_score  Float?
+  eta_display    String?
+  eta_hours      Float?
+  primary_cause  String?
+  total_loss_inr Float?
+  total_loss_kwh Float?
+  per_model_probs Json?
+  daily_table     Json?
+  model_output    Json?
+  created_at      DateTime  @default(now())
+  Inverter        Inverters @relation(fields: [inverter_id], references: [id])
 }
 
 model Alerts {
@@ -98,3 +108,5 @@ model Reports {
   date  DateTime @default(now())
   size  String
 }
+
+

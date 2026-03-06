@@ -5,7 +5,7 @@ import { Copy, Plus, Send, User, MessageSquareText, Flame, Zap, Wrench } from "l
 
 export default function Copilot() {
     const [messages, setMessages] = useState([
-        { role: "assistant", content: "Hello! I'm the SuryaKiran AI Copilot. I'm monitoring your 124 inverters. How can I help you optimize your fleet today?" }
+        { role: "assistant", content: "Hello! I'm the SuryaKiran AI Copilot. Ask me about inverter risk, alerts, maintenance, or plant performance." }
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +60,7 @@ export default function Copilot() {
                 <div style={{ marginTop: 32, flex: 1, overflowY: "auto" }}>
                     <h4 style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>Recent Context</h4>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {["INV-204 Thermal analysis", "Fleet performance report", "Block B string matching"].map((item, i) => (
+                        {[].map((item, i) => (
                             <div key={i} style={{
                                 padding: "10px 12px", borderRadius: 8, fontSize: 13, color: "#475569",
                                 cursor: "pointer", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
@@ -173,3 +173,5 @@ export default function Copilot() {
         </div>
     );
 }
+
+

@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
+import { api } from '../services/api';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -17,8 +17,8 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-            login(response.data.user, response.data.token);
+            const response = await api.login({ email, password });
+            login(response.user, response.token);
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to login. Please check your credentials.');
@@ -78,3 +78,5 @@ export default function Login() {
         </div>
     );
 }
+
+

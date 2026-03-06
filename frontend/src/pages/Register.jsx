@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
+import { api } from '../services/api';
 
 export default function Register() {
     const [name, setName] = useState('');
@@ -18,11 +18,11 @@ export default function Register() {
         setLoading(true);
 
         try {
-            await axios.post('http://localhost:5000/api/auth/register', { name, email, password });
+            await api.register({ name, email, password });
 
             // Auto login after registration
-            const loginResponse = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-            login(loginResponse.data.user, loginResponse.data.token);
+            const loginResponse = await api.login({ email, password });
+            login(loginResponse.user, loginResponse.token);
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to register. Please try again.');
@@ -93,3 +93,5 @@ export default function Register() {
         </div>
     );
 }
+
+

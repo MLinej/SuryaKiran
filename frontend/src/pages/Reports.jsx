@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { FileText, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { api } from '../services/api';
@@ -17,8 +16,8 @@ export default function Reports() {
     const fetchReports = async () => {
             // Fetch real data from express api
             try {
-                const response = await axios.get('http://localhost:5000/api/reports');
-                setReports(response.data);
+                const data = await api.getReports();
+                setReports(data);
             } catch (e) {
                 console.error("Failed to load reports", e);
             } finally {
@@ -166,3 +165,4 @@ export default function Reports() {
         </div>
     );
 }
+

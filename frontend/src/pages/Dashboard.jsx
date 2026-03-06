@@ -33,7 +33,7 @@ export default function Dashboard() {
     // Derived stats for UI
     // Mock risk level: a simple calc based on high risk inverters vs total, scaled for visual effect.
     // In reality, this would come from a plant-level ML score endpoint.
-    const riskLevel = summary ? Math.min(100, Math.round(((summary.highRisk * 15 + summary.mediumRisk * 5) / summary.totalInverters) * 100)) : 0;
+    const riskLevel = summary && summary.totalInverters > 0 ? Math.min(100, Math.round(((summary.highRisk * 15 + summary.mediumRisk * 5) / summary.totalInverters) * 100)) : 0;
 
     const alertStats = {
         total: alerts.length,
@@ -95,3 +95,4 @@ export default function Dashboard() {
         </div>
     );
 }
+

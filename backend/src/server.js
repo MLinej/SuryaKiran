@@ -4,6 +4,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const errorHandler = require('./middleware/errorHandler');
+const { requireAuth } = require('./middleware/auth');
 
 // Routes Import
 const healthRoutes = require('./routes/health');
@@ -15,6 +16,7 @@ const maintenanceRoutes = require('./routes/maintenance');
 const reportsRoutes = require('./routes/reports');
 const energyRoutes = require('./routes/energy');
 const analyticsRoutes = require('./routes/analytics');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 
@@ -44,16 +46,19 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Mount Routes
+// Public routes
 app.use('/api/auth', authRoutes);
 app.use('/health', healthRoutes);
-app.use('/predict', predictRoutes);
-app.use('/api/inverters', invertersRoutes);
-app.use('/api/alerts', alertsRoutes);
-app.use('/api/maintenance', maintenanceRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/energy', energyRoutes);
-app.use('/api/analytics', analyticsRoutes);
+
+// Protected routes
+app.use('/predict', requireAuth, predictRoutes);
+app.use('/api/inverters', requireAuth, invertersRoutes);
+app.use('/api/alerts', requireAuth, alertsRoutes);
+app.use('/api/maintenance', requireAuth, maintenanceRoutes);
+app.use('/api/reports', requireAuth, reportsRoutes);
+app.use('/api/energy', requireAuth, energyRoutes);
+app.use('/api/analytics', requireAuth, analyticsRoutes);
+app.use('/api/chat', requireAuth, chatRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
@@ -61,6 +66,6 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📚 Swagger documentation available at http://localhost:${PORT}/api-docs`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
 });

@@ -9,7 +9,7 @@ import { Table, TableRow } from "../components/Table";
 import { ArrowLeft, Zap, Wrench, MessageSquare, AlertTriangle } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
-import axios from 'axios';
+
 
 export default function InverterDetail() {
     const { id } = useParams();
@@ -22,9 +22,10 @@ export default function InverterDetail() {
     const handleMaintenance = async () => {
         setMaintLoading(true);
         try {
-            await axios.post('http://localhost:5000/api/maintenance', {
+            await api.createMaintenance({
                 inverter_id: data.id,
                 issue: 'User Triggered Inspection Request',
+                details: data.aiExplanation,
                 scheduled_date: new Date().toISOString()
             });
             setMaintSuccess(true);
@@ -195,3 +196,4 @@ export default function InverterDetail() {
         </div>
     );
 }
+

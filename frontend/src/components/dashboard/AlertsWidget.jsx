@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '../Card';
 import { AlertCircle } from 'lucide-react';
 
-export function AlertsWidget({ alerts = { total: 6, critical: 2, warning: 3, info: 1 } }) {
+export function AlertsWidget({ alerts = { total: 0, critical: 0, warning: 0, info: 0 } }) {
     const hasCritical = alerts.critical > 0;
 
     return (
@@ -52,3 +52,4 @@ export function AlertsWidget({ alerts = { total: 6, critical: 2, warning: 3, inf
         </Card>
     );
 }
+
