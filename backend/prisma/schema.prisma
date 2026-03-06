@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Inverters {
+  id           String        @id
+  block        String
+  status       String
+  last_updated DateTime      @default(now())
+  Telemetry    Telemetry[]
+  Predictions  Predictions[]
+  Alerts       Alerts[]
+  Maintenance  Maintenance[]
+}
+
+model Telemetry {
+  id                String    @id @default(uuid())
+  inverter_id       String
+  
+  power_kw          Float
+  pv1_power_kw      Float
+  daily_kwh         Float
+
+  inverter_temp_c   Float
+  ambient_temp_c    Float
+
+  ac_voltage_v      Float
+  dc_voltage_v      Float
+  ac_current_a      Float
+  dc_current_a      Float
+  frequency_hz      Float
+
+  alarm_code        Int
+  op_state          Int
+
+  price_per_kwh_inr Float
+
+  timestamp         DateTime  @default(now())
+  device_timestamp  DateTime?
+  Inverter          Inverters @relation(fields: [inverter_id], references: [id])
+}
+
+model Predictions {
+  id          String    @id @default(uuid())
+  inverter_id String
+  risk_score  Float
+  risk_level  String
+  explanation String
+  created_at  DateTime  @default(now())
+  Inverter    Inverters @relation(fields: [inverter_id], references: [id])
+}
+
+model Alerts {
+  id          String    @id @default(uuid())
+  inverter_id String
+  severity    String
+  message     String
+  status      String    @default("Active")
+  acknowledged_at DateTime?
+  dismissed_at DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
+  Inverter    Inverters @relation(fields: [inverter_id], references: [id])
+}
+
+model Users {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
+  role     String @default("operator")
+}
+
+model Maintenance {
+  id             String    @id @default(uuid())
+  inverter_id    String
+  issue          String
+  status         String
+  details        String?
+  resolution_notes String?
+  scheduled_date DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @default(now()) @updatedAt
+  resolved_at    DateTime?
+  Inverter       Inverters @relation(fields: [inverter_id], references: [id])
+}
+
+model Reports {
+  id    String   @id @default(uuid())
+  title String
+  type  String
+  generated_by String?
+  date  DateTime @default(now())
+  size  String
+}

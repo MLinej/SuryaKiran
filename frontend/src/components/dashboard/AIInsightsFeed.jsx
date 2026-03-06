@@ -2,14 +2,7 @@ import React from 'react';
 import { Card } from '../Card';
 import { Activity } from 'lucide-react';
 
-const mockInsights = [
-    { id: 1, text: "Thermal anomaly detected", inverter: "INV-204", time: "2m ago", severity: "high" },
-    { id: 2, text: "Power output drop", inverter: "INV-112", time: "15m ago", severity: "medium" },
-    { id: 3, text: "Shutdown risk predicted", inverter: "INV-312", time: "1h ago", severity: "high" },
-    { id: 4, text: "Maintenance scheduled", inverter: "INV-418", time: "4h ago", severity: "info" }
-];
-
-export function AIInsightsFeed({ insights = mockInsights }) {
+export function AIInsightsFeed({ insights = [] }) {
 
     const getSeverityColor = (sev) => {
         switch (sev) {
@@ -54,6 +47,9 @@ export function AIInsightsFeed({ insights = mockInsights }) {
                         </div>
                     </div>
                 ))}
+                {insights.length === 0 && (
+                    <div style={{ color: "#94a3b8", fontSize: 13 }}>No live insights available.</div>
+                )}
             </div>
         </Card>
     );

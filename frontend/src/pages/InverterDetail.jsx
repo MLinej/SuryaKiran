@@ -9,10 +9,31 @@ import { Table, TableRow } from "../components/Table";
 import { ArrowLeft, Zap, Wrench, MessageSquare, AlertTriangle } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
+import axios from 'axios';
+
 export default function InverterDetail() {
     const { id } = useParams();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [maintLoading, setMaintLoading] = useState(false);
+    const [maintSuccess, setMaintSuccess] = useState(false);
+    const [copilotLoading, setCopilotLoading] = useState(false);
+
+    const handleMaintenance = async () => {
+        setMaintLoading(true);
+        try {
+            await axios.post('http://localhost:5000/api/maintenance', {
+                inverter_id: data.id,
+                issue: 'User Triggered Inspection Request',
+                scheduled_date: new Date().toISOString()
+            });
+            setMaintSuccess(true);
+        } catch (err) {
+            console.error("Failed to add maintenance", err);
+        } finally {
+            setMaintLoading(false);
+        }
+    };
 
     useEffect(() => {
         async function loadData() {
@@ -26,6 +47,16 @@ export default function InverterDetail() {
 
     if (loading) return <div style={{ padding: 60, textAlign: "center", color: "#64748b" }}>Loading {id} data...</div>;
     if (!data) return <div>Inverter not found</div>;
+
+    const handleCopilot = async () => {
+        setCopilotLoading(true);
+        try {
+            const response = await api.askCopilot(`Provide details for inverter ${id}`);
+            window.alert(response);
+        } finally {
+            setCopilotLoading(false);
+        }
+    };
 
     return (
         <div style={{ animation: "fadeSlideIn 0.4s ease" }}>
@@ -45,7 +76,9 @@ export default function InverterDetail() {
                     </div>
                     <p style={{ color: "#64748b", fontSize: 14 }}>{data.block} • Last updated just now</p>
                 </div>
-                <Button variant="outline" icon={<Wrench size={16} />}>Generate Maintenance Ticket</Button>
+                <Button variant="outline" icon={<Wrench size={16} />} onClick={handleMaintenance} disabled={maintLoading || maintSuccess}>
+                    {maintLoading ? 'Generating...' : maintSuccess ? 'Ticket Created' : 'Generate Maintenance Ticket'}
+                </Button>
             </div>
 
             {/* Top Row: AI Insight & Risk Gauge */}
@@ -61,8 +94,8 @@ export default function InverterDetail() {
                         {data.aiExplanation}
                     </p>
                     <div style={{ marginTop: 20 }}>
-                        <Button style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}>
-                            Ask Copilot for more details →
+                        <Button onClick={handleCopilot} disabled={copilotLoading} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}>
+                            {copilotLoading ? "Asking..." : "Ask Copilot for more details →"}
                         </Button>
                     </div>
                 </Card>

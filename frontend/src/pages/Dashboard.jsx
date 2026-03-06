@@ -41,6 +41,17 @@ export default function Dashboard() {
         warning: alerts.filter(a => a.severity === 'Warning').length,
         info: alerts.filter(a => a.severity === 'Info').length
     };
+    const insights = alerts.slice(0, 6).map((a) => ({
+        id: a.id,
+        text: a.type,
+        inverter: a.inverterId,
+        time: a.timestamp,
+        severity: a.severity.toLowerCase() === 'critical' ? 'high' : a.severity.toLowerCase() === 'warning' ? 'medium' : 'low'
+    }));
+    const outputTrend = inverters.slice(0, 12).map((inv, idx) => ({
+        time: `T${idx + 1}`,
+        power: Number(inv.power || 0)
+    }));
 
     return (
         <div style={{ animation: "fadeSlideIn 0.4s ease", paddingBottom: 40 }}>
@@ -59,8 +70,8 @@ export default function Dashboard() {
 
                     {/* TOP SECTION: SYSTEM OVERVIEW */}
                     <div style={{ display: "flex", gap: 24, flexWrap: "wrap", minHeight: 180 }}>
-                        <PlantOutputWidget output={summary?.totalPower} />
-                        <RiskGaugeWidget riskLevel={riskLevel || 32} />
+                        <PlantOutputWidget output={summary?.totalPower} trendData={outputTrend} />
+                        <RiskGaugeWidget riskLevel={riskLevel} />
                         <AlertsWidget alerts={alertStats} />
                     </div>
 
@@ -72,7 +83,7 @@ export default function Dashboard() {
                     {/* BOTTOM SECTION: OPERATIONS PANEL */}
                     <div style={{ display: "flex", gap: 24, flexWrap: "wrap", minHeight: 500 }}>
                         <div style={{ flex: "1 1 350px", display: "flex" }}>
-                            <AIInsightsFeed />
+                            <AIInsightsFeed insights={insights} />
                         </div>
                         <div style={{ flex: "2 1 600px", display: "flex", overflow: "hidden" }}>
                             <InverterTable inverters={inverters} />

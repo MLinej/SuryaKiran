@@ -8,16 +8,33 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function Analytics() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [days, setDays] = useState(7);
 
     useEffect(() => {
         async function loadData() {
             setLoading(true);
-            const res = await api.getAnalytics();
+            const res = await api.getAnalytics(days);
             setData(res);
             setLoading(false);
         }
         loadData();
-    }, []);
+    }, [days]);
+
+    const exportCsv = () => {
+        if (!data) return;
+        const rows = [
+            ["date", "actual_pr", "predicted_pr"],
+            ...data.performanceRatio.map((r) => [r.date, r.actual, r.predicted])
+        ];
+        const csv = rows.map((r) => r.join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `analytics_${days}d.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
 
     if (loading) return <div style={{ padding: 60, textAlign: "center", color: "#64748b" }}>Crunching historical data...</div>;
 
@@ -29,14 +46,14 @@ export default function Analytics() {
                     <p style={{ color: "#64748b", fontSize: 15 }}>Historical performance, loss estimates, and model accuracy.</p>
                 </div>
                 <div style={{ display: "flex", gap: 12 }}>
-                    <button style={{
+                    <button onClick={() => setDays((prev) => prev === 7 ? 30 : 7)} style={{
                         display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 12,
                         background: "white", border: "1px solid #e2e8f0", fontFamily: "'DM Sans', sans-serif", fontSize: 14,
                         color: "#475569", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
                     }}>
-                        <Calendar size={16} /> Last 7 Days
+                        <Calendar size={16} /> Last {days} Days
                     </button>
-                    <button style={{
+                    <button onClick={exportCsv} style={{
                         display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 12,
                         background: "#0f172a", border: "none", fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600,
                         color: "white", cursor: "pointer", boxShadow: "0 4px 12px rgba(15,23,42,0.2)"

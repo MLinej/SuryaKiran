@@ -3,17 +3,7 @@ import { Card } from '../Card';
 import { Zap } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 
-const mockTrendData = [
-    { time: '00:00', power: 20 },
-    { time: '04:00', power: 25 },
-    { time: '08:00', power: 35 },
-    { time: '12:00', power: 45 },
-    { time: '16:00', power: 42 },
-    { time: '20:00', power: 30 },
-    { time: '24:00', power: 22 },
-];
-
-export function PlantOutputWidget({ output = "42.5 MW", trendData = mockTrendData }) {
+export function PlantOutputWidget({ output = "0 MW", trendData = [] }) {
     return (
         <Card style={{ flex: "1 1 Minimum", display: "flex", flexDirection: "column", background: "#0f172a", color: "white", padding: 24, position: "relative", overflow: "hidden" }}>
             {/* Background Glow */}
@@ -41,7 +31,7 @@ export function PlantOutputWidget({ output = "42.5 MW", trendData = mockTrendDat
 
             <div style={{ flex: 1, minHeight: 60, marginTop: "auto" }}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={trendData}>
+                    <LineChart data={trendData.length ? trendData : [{ time: 'Now', power: 0 }]}>
                         <YAxis domain={['dataMin - 10', 'dataMax + 10']} hide />
                         <Line type="monotone" dataKey="power" stroke="#f59e0b" strokeWidth={2} dot={false} isAnimationActive={false} />
                     </LineChart>

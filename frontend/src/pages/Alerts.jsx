@@ -10,18 +10,29 @@ export default function Alerts() {
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterSeverity, setFilterSeverity] = useState("All");
+    const [filterStatus, setFilterStatus] = useState("All");
+
+    async function loadData() {
+        setLoading(true);
+        const res = await api.getAlerts();
+        setAlerts(res);
+        setLoading(false);
+    }
 
     useEffect(() => {
-        async function loadData() {
-            setLoading(true);
-            const res = await api.getAlerts();
-            setAlerts(res);
-            setLoading(false);
-        }
         loadData();
     }, []);
 
-    const filteredAlerts = filterSeverity === "All" ? alerts : alerts.filter(a => a.severity === filterSeverity);
+    const filteredAlerts = alerts.filter((a) => {
+        if (filterSeverity !== "All" && a.severity !== filterSeverity) return false;
+        if (filterStatus !== "All" && a.status !== filterStatus) return false;
+        return true;
+    });
+
+    const handleUpdateStatus = async (id, status) => {
+        await api.updateAlertStatus(id, status);
+        await loadData();
+    };
 
     return (
         <div style={{ animation: "fadeSlideIn 0.4s ease" }}>
@@ -41,12 +52,12 @@ export default function Alerts() {
                         <option value="Warning">Warning</option>
                         <option value="Info">Info</option>
                     </select>
-                    <button style={{
+                    <button onClick={() => setFilterStatus((prev) => prev === "All" ? "Active" : prev === "Active" ? "Acknowledged" : prev === "Acknowledged" ? "Dismissed" : "All")} style={{
                         display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 12,
                         background: "white", border: "1px solid #e2e8f0", fontFamily: "'DM Sans', sans-serif", fontSize: 14,
                         color: "#475569", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
                     }}>
-                        <Filter size={16} /> More Filters
+                        <Filter size={16} /> Status: {filterStatus}
                     </button>
                 </div>
             </div>
@@ -72,13 +83,13 @@ export default function Alerts() {
                                     {alert.riskScore}
                                 </div>
                                 <div style={{ display: "flex", gap: 8 }}>
-                                    <button title="Acknowledge" style={{ width: 32, height: 32, borderRadius: 8, background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                                    <button title="Acknowledge" onClick={() => handleUpdateStatus(alert.id, "Acknowledged")} style={{ width: 32, height: 32, borderRadius: 8, background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                                         <ThumbsUp size={14} />
                                     </button>
-                                    <button title="Dismiss" style={{ width: 32, height: 32, borderRadius: 8, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                                    <button title="Dismiss" onClick={() => handleUpdateStatus(alert.id, "Dismissed")} style={{ width: 32, height: 32, borderRadius: 8, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#94a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                                         <XCircle size={14} />
                                     </button>
-                                    <button title="View Details" style={{ width: 32, height: 32, borderRadius: 8, background: "#eff6ff", border: "1px solid #bfdbfe", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                                    <button title="View Details" onClick={() => window.alert(`${alert.inverterId}\n${alert.explanation}`)} style={{ width: 32, height: 32, borderRadius: 8, background: "#eff6ff", border: "1px solid #bfdbfe", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                                         <ChevronRight size={14} />
                                     </button>
                                 </div>
