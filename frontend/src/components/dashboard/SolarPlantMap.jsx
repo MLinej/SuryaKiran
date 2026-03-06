@@ -47,6 +47,12 @@ export function SolarPlantMap({ inverters = [] }) {
             </div>
 
             <div style={{ padding: 24, flex: 1, display: "flex", flexDirection: "column", gap: 32, overflowY: "auto", position: "relative" }}>
+                {sortedBlockKeys.length === 0 && (
+                    <div style={{ color: "#94a3b8", fontSize: 14, textAlign: "center", paddingTop: 24 }}>
+                        No inverters added yet. Click Add Inverter to begin monitoring.
+                    </div>
+                )}
+
                 {sortedBlockKeys.map(blockName => (
                     <div key={blockName}>
                         <h4 style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
@@ -116,3 +122,7 @@ export function SolarPlantMap({ inverters = [] }) {
         </Card>
     );
 }
+
+
+
+

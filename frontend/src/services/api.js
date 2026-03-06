@@ -2,9 +2,17 @@ import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-const http = axios.create({
+export const http = axios.create({
     baseURL: API_BASE,
-    timeout: 15000
+    timeout: 15000,
+});
+
+http.interceptors.request.use((config) => {
+    const token = localStorage.getItem("suryakiran_token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
 });
 
 const severityFromRisk = (score) => {
@@ -33,11 +41,26 @@ const mapInverterRow = (inv) => {
         rawStatus: inv.status,
         lastUpdated: relativeTime(inv.last_updated),
         last_updated: inv.last_updated,
-        power: inv.latest_power_kw || 0
+        power: inv.latest_power_kw || 0,
     };
 };
 
 export const api = {
+    async register(payload) {
+        const { data } = await http.post("/api/auth/register", payload);
+        return data;
+    },
+
+    async login(payload) {
+        const { data } = await http.post("/api/auth/login", payload);
+        return data;
+    },
+
+    async submitPrediction(payload) {
+        const { data } = await http.post("/predict", payload);
+        return data;
+    },
+
     async getFleetSummary() {
         const { data } = await http.get("/api/inverters");
         const inverters = data.map(mapInverterRow);
@@ -52,7 +75,7 @@ export const api = {
             highRisk,
             mediumRisk,
             healthy,
-            totalPower: `${(totalPowerKw / 1000).toFixed(2)} MW`
+            totalPower: `${(totalPowerKw / 1000).toFixed(2)} MW`,
         };
     },
 
@@ -73,10 +96,13 @@ export const api = {
         const inverter = data.inverter || {};
         const latestTelemetry = data.latest_telemetry || {};
         const latestPrediction = data.latest_prediction || {};
+        const modelOutput = latestPrediction.model_output?.results || {};
+        const p3 = modelOutput.prediction_3 || {};
+        const topFeatures = Array.isArray(p3.top_features) ? p3.top_features : [];
 
         const [{ data: alerts }, { data: maintenance }] = await Promise.all([
             http.get("/api/alerts"),
-            http.get("/api/maintenance")
+            http.get("/api/maintenance"),
         ]);
 
         const relatedAlerts = alerts
@@ -85,7 +111,7 @@ export const api = {
             .map((a) => ({
                 date: new Date(a.created_at).toISOString().slice(0, 10),
                 alert: a.message,
-                status: a.status === "Dismissed" ? "Resolved" : "Open"
+                status: a.status === "Dismissed" ? "Resolved" : "Open",
             }));
 
         const relatedMaintenance = maintenance
@@ -94,37 +120,48 @@ export const api = {
             .map((m) => ({
                 date: new Date(m.scheduled_date || Date.now()).toISOString().slice(0, 10),
                 alert: m.issue,
-                status: m.status === "Resolved" ? "Resolved" : "Open"
+                status: m.status === "Resolved" ? "Resolved" : "Open",
             }));
+
+        const riskScore = Number(latestPrediction.risk_score || 0);
+        const fallbackFeatures = [
+            { feature: "inverter_temp_c", importance: Number(latestTelemetry.inverter_temp_c || 0) },
+            { feature: "ac_voltage_v", importance: Number(latestTelemetry.ac_voltage_v || 0) },
+            { feature: "dc_voltage_v", importance: Number(latestTelemetry.dc_voltage_v || 0) },
+            { feature: "ac_current_a", importance: Number(latestTelemetry.ac_current_a || 0) },
+            { feature: "power_kw", importance: Number(latestTelemetry.power_kw || 0) },
+        ];
 
         return {
             id: inverter.id,
             block: inverter.block,
-            riskScore: Number(latestPrediction.risk_score || 0),
-            status: severityFromRisk(Number(latestPrediction.risk_score || 0)),
+            riskScore,
+            status: severityFromRisk(riskScore),
             predictions: [
-                { day: "Current", risk: Number(latestPrediction.risk_score || 0) },
-                { day: "D+1", risk: Number(latestPrediction.risk_score || 0) },
-                { day: "D+2", risk: Number(latestPrediction.risk_score || 0) },
-                { day: "D+3", risk: Number(latestPrediction.risk_score || 0) }
+                { day: "Current", risk: riskScore },
+                { day: "D+1", risk: riskScore },
+                { day: "D+2", risk: riskScore },
+                { day: "D+3", risk: riskScore },
             ],
             telemetry: [
                 {
                     time: new Date(latestTelemetry.timestamp || Date.now()).toLocaleTimeString(),
                     temp: Number(latestTelemetry.inverter_temp_c || 0),
                     voltage: Number(latestTelemetry.dc_voltage_v || 0),
-                    power: Number(latestTelemetry.power_kw || 0)
-                }
+                    power: Number(latestTelemetry.power_kw || 0),
+                },
             ],
-            shapFeatures: [
-                { name: "Inverter Temp", contribution: Number(latestTelemetry.inverter_temp_c || 0) },
-                { name: "AC Voltage", contribution: Number(latestTelemetry.ac_voltage_v || 0) },
-                { name: "DC Voltage", contribution: Number(latestTelemetry.dc_voltage_v || 0) },
-                { name: "AC Current", contribution: Number(latestTelemetry.ac_current_a || 0) },
-                { name: "Power", contribution: Number(latestTelemetry.power_kw || 0) }
-            ].sort((a, b) => b.contribution - a.contribution),
+            shapFeatures: (topFeatures.length ? topFeatures : fallbackFeatures)
+                .map((f) => ({
+                    name: String(f.feature || f.name || "").replaceAll("_", " "),
+                    contribution: Number(f.importance || f.contribution || 0),
+                }))
+                .sort((a, b) => b.contribution - a.contribution),
             aiExplanation: latestPrediction.explanation || "No prediction explanation available.",
-            tickets: [...relatedAlerts, ...relatedMaintenance].slice(0, 8)
+            etaDisplay: latestPrediction.eta_display || "N/A",
+            primaryCause: latestPrediction.primary_cause || "N/A",
+            totalLossInr: Number(latestPrediction.total_loss_inr || 0),
+            tickets: [...relatedAlerts, ...relatedMaintenance].slice(0, 8),
         };
     },
 
@@ -138,7 +175,7 @@ export const api = {
             riskScore: alert.risk_score || 0,
             timestamp: relativeTime(alert.created_at),
             explanation: alert.message,
-            status: alert.status
+            status: alert.status,
         }));
     },
 
@@ -147,36 +184,47 @@ export const api = {
         return data;
     },
 
+    async getMaintenance(status = "All") {
+        const { data } = await http.get("/api/maintenance", { params: { status } });
+        return data;
+    },
+
+    async createMaintenance(payload) {
+        const { data } = await http.post("/api/maintenance", payload);
+        return data;
+    },
+
+    async updateMaintenance(id, payload) {
+        const { data } = await http.put(`/api/maintenance/${id}`, payload);
+        return data;
+    },
+
+    async getEnergyImpact() {
+        const { data } = await http.get("/api/energy/impact");
+        return data;
+    },
+
+    async getReports(type = "All") {
+        const params = type && type !== "All" ? { type } : {};
+        const { data } = await http.get("/api/reports", { params });
+        return data;
+    },
+
     async getAnalytics(days = 7) {
         const { data } = await http.get("/api/analytics", { params: { days } });
         return data;
     },
 
-    async askCopilot(prompt) {
-        const [inverters, alerts, maintenance] = await Promise.all([
-            this.getInverters(),
-            this.getAlerts(),
-            http.get("/api/maintenance")
-        ]);
-
-        const highRisk = inverters.filter((i) => i.status === "High Risk").map((i) => i.id);
-        const openTickets = maintenance.data.filter((t) => t.status !== "Resolved").length;
-        const activeAlerts = alerts.filter((a) => a.status === "Active").length;
-
-        const lowerPrompt = prompt.toLowerCase();
-        if (lowerPrompt.includes("risk")) {
-            return highRisk.length
-                ? `High risk inverters right now: ${highRisk.join(", ")}. Active alerts: ${activeAlerts}.`
-                : "No high risk inverters currently. Continue normal monitoring.";
-        }
-        if (lowerPrompt.includes("maintenance") || lowerPrompt.includes("ticket")) {
-            return `There are ${openTickets} open maintenance tickets. Prioritize inverters with active critical alerts first.`;
-        }
-        return `Fleet snapshot: ${inverters.length} inverters, ${highRisk.length} high risk, ${activeAlerts} active alerts, ${openTickets} open maintenance tickets.`;
+    async askCopilot(prompt, inverterId = null) {
+        const { data } = await http.post("/api/chat", {
+            message: prompt,
+            inverter_id: inverterId || null,
+        });
+        return data.reply || "I couldn't generate a response. Please try again.";
     },
 
     async createReport(payload) {
         const { data } = await http.post("/api/reports", payload);
         return data;
-    }
+    },
 };

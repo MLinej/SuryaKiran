@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -272,7 +273,7 @@ function ProcessCards() {
 // ─── Main ────────────────────────────────────────────────────────────────────
 export default function SuryaKiranLanding() {
   const [heroVisible, setHeroVisible] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  const navigate = useNavigate();
   useEffect(() => { setTimeout(() => setHeroVisible(true), 120); }, []);
 
   const [benefitsRef, benefitsInView] = useInView();
@@ -337,7 +338,7 @@ export default function SuryaKiranLanding() {
         .timeline-node:hover { transform: scale(1.15); }
       `}</style>
 
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+
 
       {/* ── NAV ── */}
       <nav style={{
@@ -358,7 +359,7 @@ export default function SuryaKiranLanding() {
           <a href="#how-it-works" className="nav-link">How It Works</a>
           <a href="#benefits" className="nav-link">Benefits</a>
           <a href="#about" className="nav-link">About</a>
-          <button className="nav-btn" onClick={() => setShowLogin(true)}>Sign In →</button>
+          <button className="nav-btn" onClick={() => navigate('/login')}>Sign In →</button>
         </div>
       </nav>
 
@@ -415,8 +416,7 @@ export default function SuryaKiranLanding() {
             opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(20px)",
             transition: "all 0.7s ease 0.7s",
           }}>
-            <button className="cta-primary" onClick={() => setShowLogin(true)}>Get Started Free →</button>
-            <button className="cta-outline">Watch Demo ▶</button>
+            <button className="cta-primary" onClick={() => navigate('/login')}>Get Started Free →</button>
           </div>
 
           {/* Chips */}
@@ -590,7 +590,7 @@ export default function SuryaKiranLanding() {
             <p style={{ color: "#94a3b8", fontSize: 17, lineHeight: 1.8, marginBottom: 36 }}>
               SuryaKiran goes beyond displaying raw data. It turns telemetry into decisions, and alarms into understandable guidance that any operator can act on immediately.
             </p>
-            <button className="cta-primary" onClick={() => setShowLogin(true)}>Start Free →</button>
+            <button className="cta-primary" onClick={() => navigate('/login')}>Start Free →</button>
           </div>
           <div style={{ flex: 1, minWidth: 300, maxWidth: 520, display: "flex", flexDirection: "column", gap: 28 }}>
             {[
@@ -748,8 +748,7 @@ export default function SuryaKiranLanding() {
             Sign in to access the full SuryaKiran dashboard — risk predictions, AI explanations, alert management, and the GenAI copilot for your fleet.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="cta-primary" style={{ fontSize: 17 }} onClick={() => setShowLogin(true)}>Sign In to Dashboard →</button>
-            <button className="cta-outline" style={{ fontSize: 17 }}>Request Demo</button>
+            <button className="cta-primary" style={{ fontSize: 17 }} onClick={() => navigate('/login')}>Sign In to Dashboard →</button>
           </div>
           <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#334155", marginTop: 28 }}>
             No credit card required · Setup in minutes · Built for solar ops teams

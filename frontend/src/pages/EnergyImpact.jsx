@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function EnergyImpact() {
@@ -9,8 +9,8 @@ export default function EnergyImpact() {
     useEffect(() => {
         const fetchImpact = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/energy/impact');
-                setData(response.data);
+                const result = await api.getEnergyImpact();
+                setData(result);
             } catch (error) {
                 console.error("Failed to load energy impact data", error);
             } finally {
@@ -75,3 +75,4 @@ export default function EnergyImpact() {
         </div>
     );
 }
+

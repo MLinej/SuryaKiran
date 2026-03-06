@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Plus, Maximize, Activity } from 'lucide-react';
+import { api } from '../services/api';
+import { Plus } from 'lucide-react';
 import { SolarPlantMap } from '../components/dashboard/SolarPlantMap';
 
 export default function Inverters() {
@@ -8,35 +8,35 @@ export default function Inverters() {
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
     const [formData, setFormData] = useState({
-        inverter_id: 'INV-00',
+        inverter_id: '',
         block: 'A',
-        power_kw: 45.2,
-        pv1_power_kw: 46.8,
-        daily_kwh: 312.4,
-        inverter_temp_c: 48.3,
-        ambient_temp_c: 35.0,
-        ac_voltage_v: 230.5,
-        dc_voltage_v: 620.0,
-        ac_current_a: 196.5,
-        dc_current_a: 75.4,
-        frequency_hz: 50.02,
+        power_kw: '',
+        pv1_power_kw: '',
+        daily_kwh: '',
+        inverter_temp_c: '',
+        ambient_temp_c: '',
+        ac_voltage_v: '',
+        dc_voltage_v: '',
+        ac_current_a: '',
+        dc_current_a: '',
+        frequency_hz: '',
         alarm_code: 0,
         op_state: 1,
-        price_per_kwh_inr: 4.50
+        price_per_kwh_inr: ''
     });
     const [addStatus, setAddStatus] = useState(null);
 
     const fetchInverters = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/inverters');
+            const res = await api.getInverters();
             // Format for SolarPlantMap compatibility
-            const formatted = res.data.map(inv => ({
+            const formatted = res.map(inv => ({
                 id: inv.id,
                 block: inv.block || 'A',
-                status: (Number(inv.latest_risk_score || 0) >= 80 ? 'High Risk' : Number(inv.latest_risk_score || 0) >= 50 ? 'Medium Risk' : 'Healthy'),
-                riskScore: inv.latest_risk_score || 0,
-                lastUpdated: new Date(inv.last_updated).toLocaleTimeString()
+                status: inv.status,
+                riskScore: inv.riskScore || 0,
+                lastUpdated: inv.lastUpdated
             }));
             setInverters(formatted);
         } catch (error) {
@@ -54,7 +54,7 @@ export default function Inverters() {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: (name === 'inverter_id' || name === 'block') ? value : Number(value || 0)
+            [name]: (name === 'inverter_id' || name === 'block') ? value : value
         }));
     };
 
@@ -65,8 +65,21 @@ export default function Inverters() {
 
             // Feed the telemetry and prediction engine (which simultaneously upserts Inverter)
             // Note: block is sent to predictController, which maps the UI visually immediately, but is kept stripped from the downstream Python ML model
-            await axios.post('http://localhost:5000/predict', {
+            await api.submitPrediction({
                 ...formData,
+                power_kw: Number(formData.power_kw),
+                pv1_power_kw: Number(formData.pv1_power_kw),
+                daily_kwh: Number(formData.daily_kwh),
+                inverter_temp_c: Number(formData.inverter_temp_c),
+                ambient_temp_c: Number(formData.ambient_temp_c),
+                ac_voltage_v: Number(formData.ac_voltage_v),
+                dc_voltage_v: Number(formData.dc_voltage_v),
+                ac_current_a: Number(formData.ac_current_a),
+                dc_current_a: Number(formData.dc_current_a),
+                frequency_hz: Number(formData.frequency_hz),
+                alarm_code: Number(formData.alarm_code),
+                op_state: Number(formData.op_state),
+                price_per_kwh_inr: Number(formData.price_per_kwh_inr),
                 timestamp: new Date().toISOString()
             });
 
@@ -220,3 +233,5 @@ export default function Inverters() {
         </div>
     );
 }
+
+
