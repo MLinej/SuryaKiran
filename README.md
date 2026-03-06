@@ -44,3 +44,26 @@ Estimated revenue loss
 Preventable savings through early intervention
 By quantifying the financial impact of potential failures, operators can prioritize maintenance actions based on both technical risk and economic impact.
 This feature transforms the system from a monitoring tool into a decision-support platform for solar plant management.
+Models Used
+
+This project uses a combination of Machine Learning, Explainability, and Generative AI models to predict solar inverter failures and generate actionable insights for plant operators.
+
+Models Used
+
+This project uses a combination of Machine Learning, Explainable AI, and Generative AI to predict solar inverter failures and generate operational insights.
+
+1. Failure Prediction Model
+
+We use XGBoost, a powerful gradient boosting algorithm designed for tabular data, to predict whether a solar inverter is likely to fail or underperform within the next 7–10 days.
+
+2. Model Explainability
+
+To make the predictions interpretable, SHAP (SHapley Additive Explanations) is used to identify the key features contributing to inverter risk, such as temperature rise or power output drop.
+
+3. Anomaly Detection
+
+An Isolation Forest model is used as an additional layer to detect abnormal inverter behavior and unusual telemetry patterns.
+
+4. Generative AI
+
+A Large Language Model (Gemini / GPT) is used to generate natural language explanations of model predictions and suggest recommended maintenance actions.
