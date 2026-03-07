@@ -6,10 +6,11 @@
 ## 👥 Team
 
 Developed as part of an **AI-powered renewable energy analytics project**, combining expertise in machine learning, full-stack engineering, and solar energy systems.
-@itatshu - Team Leader(Machine Learning Engineer)
-@shah_6518 - Backend Engineer
-@darshanNhb - Machine Learning Engineer
-@MLinej - Frontend Engineer
+## 👥 Contributors
+* **Team Leader (ML):** [@itatshu](https://github.com/itatshu)
+* **Backend:** [@shah_6518](https://github.com/shah_6518)
+* **ML Engineer:** [@darshanNhb](https://github.com/darshanNhb)
+* **Frontend:** [@MLinej](https://github.com/MLinej)
 
 
 ---
