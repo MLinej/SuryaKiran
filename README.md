@@ -1,6 +1,18 @@
 # <img src="https://img.shields.io/badge/☀️-SuryaKiran-orange?style=flat-square" alt="SuryaKiran"> SuryaKiran
 
 <div align="center">
+---
+
+## 👥 Team
+
+Developed as part of an **AI-powered renewable energy analytics project**, combining expertise in machine learning, full-stack engineering, and solar energy systems.
+@itatshu - Team Leader(Machine Learning Engineer)
+@shah_6518 - Backend Engineer
+@darshanNhb - Machine Learning Engineer
+@MLinej - Frontend Engineer
+
+
+---
 
 <h3>⚡ AI-Powered Solar Inverter Predictive Maintenance Platform</h3>
 
@@ -547,13 +559,6 @@ The platform adapts these patterns specifically for **distributed solar inverter
 - [ ] **Anomaly explainability upgrade** — Full SHAP value integration across all models
 - [ ] **Mobile app** — Field technician companion app
 
----
-
-## 👥 Team
-
-Developed as part of an **AI-powered renewable energy analytics project**, combining expertise in machine learning, full-stack engineering, and solar energy systems.
-
----
 
 ## 📜 License
 
