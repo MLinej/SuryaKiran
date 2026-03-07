@@ -164,18 +164,20 @@ SuryaKiran uses a **4-model weighted ensemble** to maximize both precision and r
 
 | Model | Role | Weight |
 |---|---|---|
-| **Random Forest** | Robust baseline, handles noisy data | `0.265` |
-| **XGBoost** | Gradient boosting, high fault precision | `0.265` |
-| **LightGBM** | Fast training, effective on imbalanced data | `0.265` |
-| **CatBoost** | Feature attribution + categorical handling | `0.265` |
+| **Random Forest** | Robust baseline, handles noisy data | `0.241` |
+| **XGBoost** | Gradient boosting, high fault precision | `0.259` |
+| **LightGBM** | Fast training, effective on imbalanced data | `0.253` |
+| **CatBoost** | Feature attribution + categorical handling | `0.247` |
+| **Isolation Forest** | Detect Outliers + Anomaly handling | `0 / 0.1` |
+
 
 ### Ensemble Scoring Formula
 
 ```
-Score_final = (0.265 × P_RF)
-            + (0.265 × P_XGB)
-            + (0.265 × P_LGBM)
-            + (0.265 × P_CatBoost)
+Score_final = (0.241 × P_RF)
+            + (0.259 × P_XGB)
+            + (0.253 × P_LGBM)
+            + (0.247 × P_CatBoost)
             + Agreement_Bonus
 ```
 
@@ -296,6 +298,7 @@ This multi-model cross-check ensures **reliable and explainable diagnoses**.
 | **Node.js + Express.js** | REST API server |
 | **Prisma ORM** | Database access layer |
 | **JWT Authentication** | Secure session management |
+| **Postgre SQL** | Database Used |
 
 ### Machine Learning
 | Technology | Purpose |
@@ -442,7 +445,7 @@ The dashboard integrates the **Google Translate Widget**, enabling multilingual 
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/suryakiran.git
+git clone https://github.com/MLinej/SuryaKiran.git
 cd suryakiran
 ```
 
@@ -489,7 +492,7 @@ JWT_SECRET=your_jwt_secret_here
 JWT_EXPIRES_IN=7d
 
 # AI Copilot
-OPENAI_API_KEY=your_openai_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # ML Service
 ML_SERVICE_URL=http://localhost:8000
