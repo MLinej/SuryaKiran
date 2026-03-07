@@ -1,9 +1,9 @@
 // src/pages/Alerts.jsx
 import { useState, useEffect } from "react";
-import { api } from "../services/api";
-import { Badge } from "../components/Badge";
-import { Table, TableRow } from "../components/Table";
-import { Button } from "../components/Button";
+import { api } from "@/services/api";
+import { Badge } from "@/components/Badge";
+import { Table, TableRow } from "@/components/Table";
+import { Button } from "@/components/Button";
 import { Filter, ThumbsUp, XCircle, ChevronRight } from "lucide-react";
 
 export default function Alerts() {

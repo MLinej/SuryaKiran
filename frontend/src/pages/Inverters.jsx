@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { api } from '@/services/api';
 import { Plus } from 'lucide-react';
-import { SolarPlantMap } from '../components/dashboard/SolarPlantMap';
+import { SolarPlantMap } from '@/components/dashboard/SolarPlantMap';
 
 export default function Inverters() {
     const [inverters, setInverters] = useState([]);
@@ -127,11 +127,11 @@ export default function Inverters() {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Inverter ID</label>
-                                    <input required type="text" name="inverter_id" value={formData.inverter_id} onChange={handleInputChange} placeholder="INV-00" style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="text" name="inverter_id" value={formData.inverter_id} onChange={handleInputChange} placeholder="INV-00" style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Block Area</label>
-                                    <select required name="block" value={formData.block} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', backgroundColor: 'white' }}>
+                                    <select name="block" value={formData.block} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', backgroundColor: 'white' }}>
                                         <option value="A">Block A</option>
                                         <option value="B">Block B</option>
                                         <option value="C">Block C</option>
@@ -143,56 +143,56 @@ export default function Inverters() {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Power (kW)</label>
-                                    <input required min="0.01" type="number" step="0.1" name="power_kw" value={formData.power_kw} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="power_kw" value={formData.power_kw} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>PV1 Power (kW)</label>
-                                    <input required min="0.01" type="number" step="0.1" name="pv1_power_kw" value={formData.pv1_power_kw} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="pv1_power_kw" value={formData.pv1_power_kw} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Daily (kWh)</label>
-                                    <input required min="0.01" type="number" step="0.1" name="daily_kwh" value={formData.daily_kwh} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="daily_kwh" value={formData.daily_kwh} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Inv. Temp (°C)</label>
-                                    <input required type="number" step="0.1" name="inverter_temp_c" value={formData.inverter_temp_c} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="inverter_temp_c" value={formData.inverter_temp_c} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Amb. Temp (°C)</label>
-                                    <input required type="number" step="0.1" name="ambient_temp_c" value={formData.ambient_temp_c} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="ambient_temp_c" value={formData.ambient_temp_c} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>AC V</label>
-                                    <input required type="number" step="0.1" name="ac_voltage_v" value={formData.ac_voltage_v} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="ac_voltage_v" value={formData.ac_voltage_v} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>DC V</label>
-                                    <input required type="number" step="0.1" name="dc_voltage_v" value={formData.dc_voltage_v} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="dc_voltage_v" value={formData.dc_voltage_v} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>AC I</label>
-                                    <input required type="number" step="0.1" name="ac_current_a" value={formData.ac_current_a} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="ac_current_a" value={formData.ac_current_a} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>DC I</label>
-                                    <input required type="number" step="0.1" name="dc_current_a" value={formData.dc_current_a} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="dc_current_a" value={formData.dc_current_a} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Freq (Hz)</label>
-                                    <input required type="number" step="0.01" name="frequency_hz" value={formData.frequency_hz} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="frequency_hz" value={formData.frequency_hz} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Alarm Code</label>
-                                    <select required name="alarm_code" value={formData.alarm_code} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', backgroundColor: 'white' }}>
+                                    <select name="alarm_code" value={formData.alarm_code} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', backgroundColor: 'white' }}>
                                         <option value={0}>0 - No Alarm</option>
                                         <option value={100}>100 - Grid Overvoltage</option>
                                         <option value={210}>210 - Inverter Overtemperature</option>
@@ -201,7 +201,7 @@ export default function Inverters() {
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Op State</label>
-                                    <select required name="op_state" value={formData.op_state} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', backgroundColor: 'white' }}>
+                                    <select name="op_state" value={formData.op_state} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', backgroundColor: 'white' }}>
                                         <option value={0}>0 - Off</option>
                                         <option value={1}>1 - Running Normally</option>
                                         <option value={2}>2 - Fault</option>
@@ -210,7 +210,7 @@ export default function Inverters() {
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Price (INR)</label>
-                                    <input required min="0.01" type="number" step="0.1" name="price_per_kwh_inr" value={formData.price_per_kwh_inr} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
+                                    <input type="number" name="price_per_kwh_inr" value={formData.price_per_kwh_inr} onChange={handleInputChange} style={{ width: '100%', padding: '8px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }} />
                                 </div>
                             </div>
 
@@ -233,5 +233,6 @@ export default function Inverters() {
         </div>
     );
 }
+
 
 

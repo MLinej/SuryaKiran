@@ -1,18 +1,39 @@
 import { useState, useEffect } from "react";
-import { api } from "../services/api";
+import { api } from "@/services/api";
 
-import { PlantOutputWidget } from "../components/dashboard/PlantOutputWidget";
-import { RiskGaugeWidget } from "../components/dashboard/RiskGaugeWidget";
-import { AlertsWidget } from "../components/dashboard/AlertsWidget";
-import { SolarPlantMap } from "../components/dashboard/SolarPlantMap";
-import { AIInsightsFeed } from "../components/dashboard/AIInsightsFeed";
-import { InverterTable } from "../components/dashboard/InverterTable";
+import { PlantOutputWidget } from "@/components/dashboard/PlantOutputWidget";
+import { RiskGaugeWidget } from "@/components/dashboard/RiskGaugeWidget";
+import { AlertsWidget } from "@/components/dashboard/AlertsWidget";
+import { InverterPredictionGrid } from "@/components/dashboard/InverterPredictionGrid";
+import { CSVUploadModal } from "@/components/dashboard/CSVUploadModal";
+import { AIInsightsFeed } from "@/components/dashboard/AIInsightsFeed";
+
+import { InverterTable } from "@/components/dashboard/InverterTable";
 
 export default function Dashboard() {
     const [summary, setSummary] = useState(null);
     const [inverters, setInverters] = useState([]);
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+    const handleUploadSuccess = async (csvContent) => {
+        try {
+            await api.uploadForecast(csvContent);
+            // Refresh dashboard data or trigger forecast-specific fetch
+            const [sumData, invData] = await Promise.all([
+                api.getFleetSummary(),
+                api.getInverters()
+            ]);
+            setSummary(sumData);
+            setInverters(invData);
+            alert("Forecast data uploaded and processed successfully!");
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Failed to process forecast data on the server.");
+        }
+    };
+
 
     useEffect(() => {
         async function fetchData() {
@@ -75,10 +96,20 @@ export default function Dashboard() {
                         <AlertsWidget alerts={alertStats} />
                     </div>
 
-                    {/* CENTER SECTION: SOLAR PLANT MAP (MAIN VISUALIZATION) */}
-                    <div style={{ display: "flex", height: 400 }}>
-                        <SolarPlantMap inverters={inverters} />
+                    {/* CENTER SECTION: INVERTER PREDICTION GRID (REPLACES SOLAR MAP) */}
+                    <div style={{ display: "flex" }}>
+                        <InverterPredictionGrid
+                            inverters={inverters}
+                            onUploadClick={() => setIsUploadModalOpen(true)}
+                        />
                     </div>
+
+                    <CSVUploadModal
+                        isOpen={isUploadModalOpen}
+                        onClose={() => setIsUploadModalOpen(false)}
+                        onUploadSuccess={handleUploadSuccess}
+                    />
+
 
                     {/* BOTTOM SECTION: OPERATIONS PANEL */}
                     <div style={{ display: "flex", gap: 24, flexWrap: "wrap", minHeight: 500 }}>

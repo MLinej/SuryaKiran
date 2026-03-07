@@ -4,7 +4,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export const http = axios.create({
     baseURL: API_BASE,
-    timeout: 15000,
+    timeout: 300000,  // 5 minutes — ML training on large CSVs takes time
 });
 
 http.interceptors.request.use((config) => {
@@ -14,6 +14,20 @@ http.interceptors.request.use((config) => {
     }
     return config;
 });
+
+http.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const isAuthRequest = error.config && error.config.url && error.config.url.includes('/api/auth');
+
+        if (error.response && error.response.status === 401 && !isAuthRequest) {
+            localStorage.removeItem("suryakiran_token");
+            localStorage.removeItem("suryakiran_user");
+            window.location.href = "/login";
+        }
+        return Promise.reject(error);
+    }
+);
 
 const severityFromRisk = (score) => {
     if (score >= 80) return "High Risk";
@@ -31,6 +45,19 @@ const relativeTime = (dateString) => {
     return `${Math.floor(hours / 24)}d ago`;
 };
 
+
+const parseMaybeJson = (value, fallback = {}) => {
+    if (value === null || value === undefined) return fallback;
+    if (typeof value === 'object') return value;
+    if (typeof value === 'string') {
+        try {
+            return JSON.parse(value);
+        } catch (_e) {
+            return fallback;
+        }
+    }
+    return fallback;
+};
 const mapInverterRow = (inv) => {
     const riskScore = Number(inv.latest_risk_score || 0);
     return {
@@ -96,7 +123,8 @@ export const api = {
         const inverter = data.inverter || {};
         const latestTelemetry = data.latest_telemetry || {};
         const latestPrediction = data.latest_prediction || {};
-        const modelOutput = latestPrediction.model_output?.results || {};
+        const parsedModelOutput = parseMaybeJson(latestPrediction.model_output, {});
+        const modelOutput = parsedModelOutput.results || parsedModelOutput || {};
         const p3 = modelOutput.prediction_3 || {};
         const topFeatures = Array.isArray(p3.top_features) ? p3.top_features : [];
 
@@ -223,8 +251,47 @@ export const api = {
         return data.reply || "I couldn't generate a response. Please try again.";
     },
 
+    async uploadForecast(csvContent) {
+        const { data } = await http.post("/api/forecast/upload", { file_content: csvContent });
+        return data;
+    },
+
+    async getForecastNext(inverterId, currentMinute) {
+        const { data } = await http.get("/api/forecast/next", {
+            params: { inverter_id: inverterId, current_minute: currentMinute }
+        });
+        return data;
+    },
+
+    async getForecastAll(inverterId) {
+        const { data } = await http.get("/api/forecast/all", {
+            params: { inverter_id: inverterId }
+        });
+
+        if (Array.isArray(data.forecast)) {
+            return {
+                inverter_id: data.inverter_id || inverterId,
+                power: data.forecast.map((p) => Number(p.predicted_power_kw || 0)),
+                risk: data.forecast.map((p) => Number(p.risk_score || 0)),
+                timestamps: data.forecast.map((p) => p.timestamp || null),
+                source: data.source || "unknown",
+            };
+        }
+
+        return {
+            inverter_id: data.inverter_id || inverterId,
+            power: Array.isArray(data.power) ? data.power.map(Number) : [],
+            risk: Array.isArray(data.risk) ? data.risk.map(Number) : [],
+            timestamps: Array.isArray(data.timestamps) ? data.timestamps : [],
+            source: data.source || "unknown",
+        };
+    },
+
     async createReport(payload) {
         const { data } = await http.post("/api/reports", payload);
         return data;
     },
 };
+
+
+

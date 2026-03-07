@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
-import { api } from '../services/api';
+import { api } from '@/services/api';
 
 export default function Reports() {
     const [reports, setReports] = useState([]);

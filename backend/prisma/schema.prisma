@@ -3,25 +3,27 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Inverters {
-  id           String        @id
-  block        String
-  status       String
-  last_updated DateTime      @default(now())
-  Telemetry    Telemetry[]
-  Predictions  Predictions[]
-  Alerts       Alerts[]
-  Maintenance  Maintenance[]
+  id              String           @id
+  block           String
+  status          String
+  last_updated    DateTime         @default(now())
+  Telemetry       Telemetry[]
+  Predictions     Predictions[]
+  Alerts          Alerts[]
+  Maintenance     Maintenance[]
+  ForecastUploads ForecastUpload[]
+  ForecastPoints  ForecastPoint[]
 }
 
 model Telemetry {
   id                String    @id @default(uuid())
   inverter_id       String
-  
+
   power_kw          Float
   pv1_power_kw      Float
   daily_kwh         Float
@@ -46,67 +48,96 @@ model Telemetry {
 }
 
 model Predictions {
-  id             String    @id @default(uuid())
-  inverter_id    String
-  risk_score     Float
-  risk_level     String
-  explanation    String
-  current_status String?
-  current_score  Float?
-  eta_display    String?
-  eta_hours      Float?
-  primary_cause  String?
-  total_loss_inr Float?
-  total_loss_kwh Float?
-  per_model_probs Json?
-  daily_table     Json?
-  model_output    Json?
+  id              String    @id @default(uuid())
+  inverter_id     String
+  risk_score      Float
+  risk_level      String
+  explanation     String
+  current_status  String?
+  current_score   Float?
+  eta_display     String?
+  eta_hours       Float?
+  primary_cause   String?
+  total_loss_inr  Float?
+  total_loss_kwh  Float?
+  per_model_probs String?
+  daily_table     String?
+  model_output    String?
   created_at      DateTime  @default(now())
   Inverter        Inverters @relation(fields: [inverter_id], references: [id])
 }
 
 model Alerts {
-  id          String    @id @default(uuid())
-  inverter_id String
-  severity    String
-  message     String
-  status      String    @default("Active")
+  id              String    @id @default(uuid())
+  inverter_id     String
+  severity        String
+  message         String
+  status          String    @default("Active")
   acknowledged_at DateTime?
-  dismissed_at DateTime?
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @default(now()) @updatedAt
-  Inverter    Inverters @relation(fields: [inverter_id], references: [id])
+  dismissed_at    DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+  Inverter        Inverters @relation(fields: [inverter_id], references: [id])
 }
 
 model Users {
-  id       String @id @default(uuid())
-  name     String
-  email    String @unique
-  password String
-  role     String @default("operator")
+  id               String           @id @default(uuid())
+  name             String
+  email            String           @unique
+  password         String
+  role             String           @default("operator")
+  forecast_uploads ForecastUpload[]
 }
 
 model Maintenance {
-  id             String    @id @default(uuid())
-  inverter_id    String
-  issue          String
-  status         String
-  details        String?
+  id               String    @id @default(uuid())
+  inverter_id      String
+  issue            String
+  status           String
+  details          String?
   resolution_notes String?
-  scheduled_date DateTime?
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @default(now()) @updatedAt
-  resolved_at    DateTime?
-  Inverter       Inverters @relation(fields: [inverter_id], references: [id])
+  scheduled_date   DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+  resolved_at      DateTime?
+  Inverter         Inverters @relation(fields: [inverter_id], references: [id])
 }
 
 model Reports {
-  id    String   @id @default(uuid())
-  title String
-  type  String
+  id           String   @id @default(uuid())
+  title        String
+  type         String
   generated_by String?
-  date  DateTime @default(now())
-  size  String
+  date         DateTime @default(now())
+  size         String
 }
 
+model ForecastUpload {
+  id             String         @id @default(uuid())
+  user_id        String
+  inverter_id    String?
+  csv_content    String
+  rows_count     Int            @default(0)
+  source         String         @default("csv")
+  created_at     DateTime       @default(now())
+  User           Users          @relation(fields: [user_id], references: [id])
+  Inverter       Inverters?     @relation(fields: [inverter_id], references: [id])
+  ForecastPoints ForecastPoint[]
+}
 
+model ForecastPoint {
+  id                 String          @id @default(uuid())
+  upload_id          String?
+  inverter_id        String
+  minute_offset      Int
+  timestamp_iso      String
+  predicted_power_kw Float
+  risk_score         Float
+  source             String          @default("pretrained")
+  created_at         DateTime        @default(now())
+  Upload             ForecastUpload? @relation(fields: [upload_id], references: [id])
+  Inverter           Inverters       @relation(fields: [inverter_id], references: [id])
+
+  @@index([inverter_id, minute_offset])
+  @@index([inverter_id, created_at])
+}

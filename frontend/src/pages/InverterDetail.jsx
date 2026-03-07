@@ -1,11 +1,11 @@
 // src/pages/InverterDetail.jsx
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { api } from "../services/api";
-import { Card } from "../components/Card";
-import { Badge } from "../components/Badge";
-import { Button } from "../components/Button";
-import { Table, TableRow } from "../components/Table";
+import { api } from "@/services/api";
+import { Card } from "@/components/Card";
+import { Badge } from "@/components/Badge";
+import { Button } from "@/components/Button";
+import { Table, TableRow } from "@/components/Table";
 import { ArrowLeft, Zap, Wrench, MessageSquare, AlertTriangle } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 

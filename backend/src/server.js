@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
@@ -17,12 +18,15 @@ const reportsRoutes = require('./routes/reports');
 const energyRoutes = require('./routes/energy');
 const analyticsRoutes = require('./routes/analytics');
 const chatRoutes = require('./routes/chat');
+const forecastRoutes = require('./routes/forecast');
+
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Swagger Options
 const swaggerOptions = {
@@ -59,6 +63,8 @@ app.use('/api/reports', requireAuth, reportsRoutes);
 app.use('/api/energy', requireAuth, energyRoutes);
 app.use('/api/analytics', requireAuth, analyticsRoutes);
 app.use('/api/chat', requireAuth, chatRoutes);
+app.use('/api/forecast', requireAuth, forecastRoutes);
+
 
 // Global Error Handler
 app.use(errorHandler);

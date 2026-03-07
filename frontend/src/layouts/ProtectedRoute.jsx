@@ -1,16 +1,16 @@
 import { useContext } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '@/context/AuthContext';
 
 export default function ProtectedRoute() {
-    const { user, loading } = useContext(AuthContext);
+    const { loading, isAuthenticated } = useContext(AuthContext);
 
     if (loading) {
         return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', color: 'white' }}>Loading...</div>;
     }
 
-    if (!user) {
-        return <Navigate to="/login" replace />;
+    if (!isAuthenticated) {
+        return <Navigate to='/login' replace />;
     }
 
     return <Outlet />;

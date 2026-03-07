@@ -1,7 +1,7 @@
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { Copy, Activity, AlertTriangle, MessageSquare, BarChart2, LogOut, Wrench, Zap, FileText } from "lucide-react";
 import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "@/context/AuthContext";
 
 export default function AppLayout() {
     const location = useLocation();
