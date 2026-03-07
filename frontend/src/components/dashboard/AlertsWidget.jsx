@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '../Card';
+import { Card } from '@/components/Card';
 import { AlertCircle } from 'lucide-react';
 
 export function AlertsWidget({ alerts = { total: 0, critical: 0, warning: 0, info: 0 } }) {

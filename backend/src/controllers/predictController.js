@@ -1,6 +1,16 @@
 const mlService = require('../services/mlService');
 const prisma = require('../config/database');
 
+function toJsonString(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string') return value;
+    try {
+        return JSON.stringify(value);
+    } catch (_error) {
+        return String(value);
+    }
+}
+
 const predictProbability = async (req, res, next) => {
     try {
         const {
@@ -103,9 +113,9 @@ const predictProbability = async (req, res, next) => {
                     primary_cause,
                     total_loss_inr,
                     total_loss_kwh,
-                    per_model_probs,
-                    daily_table,
-                    model_output,
+                    per_model_probs: toJsonString(per_model_probs),
+                    daily_table: toJsonString(daily_table),
+                    model_output: toJsonString(model_output),
                 },
             }),
         ]);

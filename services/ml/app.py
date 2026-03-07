@@ -23,6 +23,8 @@ def create_app():
     # Register isolated modules
     app.register_blueprint(ml_bp)
     app.register_blueprint(chat_bp)
+    from forecast import forecast_bp
+    app.register_blueprint(forecast_bp)
 
     return app
 

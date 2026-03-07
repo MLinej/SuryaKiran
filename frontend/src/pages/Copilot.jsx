@@ -1,6 +1,6 @@
 // src/pages/Copilot.jsx
 import { useState, useRef, useEffect } from "react";
-import { api } from "../services/api";
+import { api } from "@/services/api";
 import { Copy, Plus, Send, User, MessageSquareText, Flame, Zap, Wrench } from "lucide-react";
 
 export default function Copilot() {

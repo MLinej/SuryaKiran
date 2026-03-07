@@ -1,7 +1,7 @@
 // src/pages/Analytics.jsx
 import { useState, useEffect } from "react";
-import { api } from "../services/api";
-import { Card } from "../components/Card";
+import { api } from "@/services/api";
+import { Card } from "@/components/Card";
 import { Calendar, Download, TrendingDown } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 

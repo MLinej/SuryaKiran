@@ -1,35 +1,44 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useMemo, useState } from 'react';
 
 export const AuthContext = createContext();
 
+function safeParseUser() {
+    try {
+        const raw = localStorage.getItem('suryakiran_user');
+        return raw ? JSON.parse(raw) : null;
+    } catch (_error) {
+        localStorage.removeItem('suryakiran_user');
+        return null;
+    }
+}
+
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [token, setToken] = useState(() => localStorage.getItem('suryakiran_token') || '');
+    const [user, setUser] = useState(() => safeParseUser());
+    const loading = false;
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem('suryakiran_user');
-        const token = localStorage.getItem('suryakiran_token');
-        if (storedUser && token) {
-            setUser(JSON.parse(storedUser));
-        }
-        setLoading(false);
-    }, []);
-
-    const login = (userData, token) => {
-        setUser(userData);
+    const login = (userData, authToken) => {
+        localStorage.setItem('suryakiran_token', authToken);
         localStorage.setItem('suryakiran_user', JSON.stringify(userData));
-        localStorage.setItem('suryakiran_token', token);
+        setToken(authToken);
+        setUser(userData);
     };
 
     const logout = () => {
-        setUser(null);
-        localStorage.removeItem('suryakiran_user');
         localStorage.removeItem('suryakiran_token');
+        localStorage.removeItem('suryakiran_user');
+        setToken('');
+        setUser(null);
     };
 
-    return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    const value = useMemo(() => ({
+        token,
+        user,
+        loading,
+        login,
+        logout,
+        isAuthenticated: Boolean(token),
+    }), [token, user]);
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

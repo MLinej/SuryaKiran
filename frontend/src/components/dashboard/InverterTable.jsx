@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Card } from '../Card';
-import { Table, TableRow } from '../Table';
-import { Badge } from '../Badge';
+import { Card } from '@/components/Card';
+import { Table, TableRow } from '@/components/Table';
+import { Badge } from '@/components/Badge';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '../Card';
+import { Card } from '@/components/Card';
 import { Zap } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 
