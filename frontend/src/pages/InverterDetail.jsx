@@ -82,75 +82,90 @@ export default function InverterDetail() {
                 </Button>
             </div>
 
-            {/* Top Row: AI Insight & Risk Gauge */}
-            <div style={{ display: "flex", gap: 24, marginBottom: 24, flexWrap: "wrap" }}>
-
-                <Card style={{ flex: "1 1 500px", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", color: "white", position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", top: -30, right: -30, width: 140, height: 140, borderRadius: "50%", background: "rgba(245,158,11,0.1)" }} />
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                        <MessageSquare size={20} color="#f59e0b" />
-                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#fcd34d", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>AI Generated Insight</span>
-                    </div>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, lineHeight: 1.8, color: "#cbd5e1" }}>
-                        {data.aiExplanation}
+            {/* ML Features: Locked if Untrained */}
+            {data.status === 'Untrained' ? (
+                <Card style={{ padding: '60px 20px', textAlign: 'center', background: '#f8fafc', border: '1px dashed #cbd5e1', marginBottom: 24 }}>
+                    <AlertTriangle size={48} color="#94a3b8" style={{ margin: '0 auto 16px' }} />
+                    <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>AI Prediction Engine Offline</h3>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: '#64748b', maxWidth: 500, margin: '0 auto 24px' }}>
+                        This inverter model has not been trained yet. Please upload a historical CSV dataset for <strong>{data.id}</strong> on the dashboard to unlock real-time fault predictions, SHAP feature importance, and GenAI Copilot insights.
                     </p>
-                    <div style={{ marginTop: 20 }}>
-                        <Button onClick={handleCopilot} disabled={copilotLoading} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}>
-                            {copilotLoading ? "Asking..." : "Ask Copilot for more details →"}
+                    <Link to="/dashboard">
+                        <Button variant="primary" icon={<span style={{ fontSize: 16 }}>📊</span>}>
+                            Return to Dashboard to Upload CSV
                         </Button>
+                    </Link>
+                </Card>
+            ) : (
+                <>
+                    {/* Top Row: AI Insight & Risk Gauge */}
+                    <div style={{ display: "flex", gap: 24, marginBottom: 24, flexWrap: "wrap" }}>
+                        <Card style={{ flex: "1 1 500px", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", color: "white", position: "relative", overflow: "hidden" }}>
+                            <div style={{ position: "absolute", top: -30, right: -30, width: 140, height: 140, borderRadius: "50%", background: "rgba(245,158,11,0.1)" }} />
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                                <MessageSquare size={20} color="#f59e0b" />
+                                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "#fcd34d", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>AI Generated Insight</span>
+                            </div>
+                            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, lineHeight: 1.8, color: "#cbd5e1" }}>
+                                {data.aiExplanation}
+                            </p>
+                            <div style={{ marginTop: 20 }}>
+                                <Button onClick={handleCopilot} disabled={copilotLoading} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "white" }}>
+                                    {copilotLoading ? "Asking..." : "Ask Copilot for more details →"}
+                                </Button>
+                            </div>
+                        </Card>
+
+                        <Card style={{ flex: "0 0 320px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                            <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Current Risk Score</h3>
+                            <div style={{ position: "relative", width: 160, height: 160, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
+                                <svg width="160" height="160" viewBox="0 0 160 160">
+                                    <circle cx="80" cy="80" r="70" fill="none" stroke="#f1f5f9" strokeWidth="12" />
+                                    <circle cx="80" cy="80" r="70" fill="none" stroke={data.riskScore > 80 ? "#ef4444" : data.riskScore > 50 ? "#f59e0b" : "#22c55e"} strokeWidth="12" strokeDasharray={`${(data.riskScore / 100) * 440} 440`} strokeLinecap="round" transform="rotate(-90 80 80)" />
+                                </svg>
+                                <div style={{ position: "absolute", textAlign: "center" }}>
+                                    <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 44, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{data.riskScore}</div>
+                                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#94a3b8" }}>/ 100</div>
+                                </div>
+                            </div>
+                        </Card>
                     </div>
-                </Card>
 
-                <Card style={{ flex: "0 0 320px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Current Risk Score</h3>
-                    <div style={{ position: "relative", width: 160, height: 160, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
-                        {/* Fake Gauge implementation for UI */}
-                        <svg width="160" height="160" viewBox="0 0 160 160">
-                            <circle cx="80" cy="80" r="70" fill="none" stroke="#f1f5f9" strokeWidth="12" />
-                            <circle cx="80" cy="80" r="70" fill="none" stroke={data.riskScore > 80 ? "#ef4444" : data.riskScore > 50 ? "#f59e0b" : "#22c55e"} strokeWidth="12" strokeDasharray={`${(data.riskScore / 100) * 440} 440`} strokeLinecap="round" transform="rotate(-90 80 80)" />
-                        </svg>
-                        <div style={{ position: "absolute", textAlign: "center" }}>
-                            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 44, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{data.riskScore}</div>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#94a3b8" }}>/ 100</div>
-                        </div>
+                    {/* Middle Row: Trend & SHAP */}
+                    <div style={{ display: "flex", gap: 24, marginBottom: 24, flexWrap: "wrap" }}>
+                        <Card style={{ flex: "2 1 500px", height: 350, display: "flex", flexDirection: "column" }}>
+                            <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 24 }}>7-Day Predictive Risk Trend</h3>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.predictions} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} domain={[0, 100]} />
+                                    <RechartsTooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }} />
+                                    <Line type="monotone" dataKey="risk" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </Card>
+
+                        <Card style={{ flex: "1 1 300px", height: 350, display: "flex", flexDirection: "column" }}>
+                            <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Feature Importance (SHAP)</h3>
+                            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#64748b", marginBottom: 24 }}>Top factors contributing to risk score.</p>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart layout="vertical" data={data.shapFeatures} margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#475569" }} width={120} />
+                                    <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 12, border: "none" }} />
+                                    <Bar dataKey="contribution" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={16}>
+                                        {data.shapFeatures.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={index === 0 ? "#ef4444" : index === 1 ? "#f59e0b" : "#8b5cf6"} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </Card>
                     </div>
-                </Card>
-            </div>
-
-            {/* Middle Row: Trend & SHAP */}
-            <div style={{ display: "flex", gap: 24, marginBottom: 24, flexWrap: "wrap" }}>
-
-                <Card style={{ flex: "2 1 500px", height: 350, display: "flex", flexDirection: "column" }}>
-                    <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 24 }}>7-Day Predictive Risk Trend</h3>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data.predictions} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} domain={[0, 100]} />
-                            <RechartsTooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }} />
-                            <Line type="monotone" dataKey="risk" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </Card>
-
-                <Card style={{ flex: "1 1 300px", height: 350, display: "flex", flexDirection: "column" }}>
-                    <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Feature Importance (SHAP)</h3>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#64748b", marginBottom: 24 }}>Top factors contributing to risk score.</p>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart layout="vertical" data={data.shapFeatures} margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                            <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#475569" }} width={120} />
-                            <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 12, border: "none" }} />
-                            <Bar dataKey="contribution" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={16}>
-                                {data.shapFeatures.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={index === 0 ? "#ef4444" : index === 1 ? "#f59e0b" : "#8b5cf6"} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </Card>
-            </div>
+                </>
+            )}
 
             {/* Bottom Row: Telemetry & Alarms */}
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>

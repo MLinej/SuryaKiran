@@ -422,87 +422,6 @@ def forecast_upload():
 # ENDPOINT 2 — GET /forecast/next  (called every 1 minute)
 # ─────────────────────────────────────────────────────────────────
 
-def initialize_fallback_if_needed(inv_id: str) -> bool:
-    """
-    If no CSV was uploaded for this inverter, generate a synthetic forecast 
-    using the pre-trained joblib bundle so the dashboard isn't completely empty.
-    """
-    if inv_id in FORECAST_STORE:
-        return True
-        
-    bundle_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../website_power_risk_bundle.joblib'))
-    if not os.path.exists(bundle_path):
-        return False
-        
-    try:
-        data = joblib.load(bundle_path)
-        models_dict = data.get("models", {})
-        if not models_dict:
-            return False
-            
-        # Use any available trained model as generic fallback
-        model = list(models_dict.values())[0]
-    except Exception as e:
-        print(f"Fallback load failed: {str(e)}")
-        return False
-        
-    total_minutes = 1440
-    now = datetime.now()
-    # Normalize to start of today so it matches the UI timeline nicely
-    start_ts = pd.Timestamp(now).replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    recent_powers = [0.0] * 10
-    preds = []
-    
-    for step in range(1, total_minutes + 1):
-        future_ts = start_ts + timedelta(minutes=step)
-        total_mins = future_ts.hour * 60 + future_ts.minute
-        sin_t = np.sin(2 * np.pi * total_mins / 1440)
-        cos_t = np.cos(2 * np.pi * total_mins / 1440)
-        
-        p_t1  = recent_powers[-1]
-        p_t3  = recent_powers[-3]
-        p_t5  = recent_powers[-5]
-        p_t10 = recent_powers[-10]
-        last5 = recent_powers[-5:]
-        
-        X = np.array([[
-            future_ts.hour, future_ts.minute, sin_t, cos_t,
-            p_t1, p_t3, p_t5, p_t10,
-            float(np.mean(last5)), float(np.std(last5)),
-            500.0, 10.0   # Mock healthy PV voltage & current
-        ]])
-        
-        # Zero out night time power for realism
-        if future_ts.hour < 6 or future_ts.hour >= 19:
-            pred = 0.0
-        else:
-            pred = max(float(model.predict(X)[0]), 0)
-            
-        preds.append(pred)
-        recent_powers.append(pred)
-        
-    # Mock a safe baseline risk score
-    risk_forecast = [0.05] * total_minutes
-
-    timestamps = [
-        (start_ts + timedelta(minutes=i + 1)).isoformat()
-        for i in range(total_minutes)
-    ]
-
-    FORECAST_STORE[inv_id] = {
-        "power": preds,
-        "risk": risk_forecast,
-        "timestamps": timestamps,
-        "weights": {"xgb": 1.0, "exp": 0.0, "lin": 0.0},
-        "last_ts": start_ts.isoformat(),
-        "total_minutes": total_minutes
-    }
-    
-    print(f"  [Fallback] Generated cold-start forecast for '{inv_id}' using website_power_risk_bundle")
-    return True
-
-
 @forecast_bp.route("/forecast/next", methods=["GET"])
 def forecast_next():
     """
@@ -530,9 +449,9 @@ def forecast_next():
     if not inv_id:
         return jsonify({"error": "inverter_id is required"}), 400
 
-    if not initialize_fallback_if_needed(inv_id):
+    if inv_id not in FORECAST_STORE:
         return jsonify({
-            "error": f"No forecast found for {inv_id}. Call POST /forecast/upload first, or ensure a fallback model is available."
+            "error": f"No forecast found for {inv_id}. Call POST /forecast/upload first to train."
         }), 404
 
     store   = FORECAST_STORE[inv_id]
@@ -580,9 +499,9 @@ def forecast_all():
     if not inv_id:
         return jsonify({"error": "inverter_id is required"}), 400
 
-    if not initialize_fallback_if_needed(inv_id):
+    if inv_id not in FORECAST_STORE:
         return jsonify({
-            "error": f"No forecast found for {inv_id}. Call POST /forecast/upload first, or ensure a fallback model is available."
+            "error": f"No forecast found for {inv_id}. Call POST /forecast/upload first to train."
         }), 404
 
     store = FORECAST_STORE[inv_id]

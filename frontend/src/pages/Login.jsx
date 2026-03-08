@@ -24,10 +24,12 @@ export default function Login() {
 
         try {
             const response = await api.login({ email, password });
+            console.log('[Login] Auth response:', response);
+            // Call context login â€” the useEffect above will redirect once isAuthenticated flips to true
             login(response.user, response.token);
-            navigate('/dashboard', { replace: true });
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to login. Please check your credentials.');
+            console.error('[Login] Error:', err);
+            setError(err.response?.data?.error || 'Login failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -37,24 +39,41 @@ export default function Login() {
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', fontFamily: "'DM Sans', sans-serif" }}>
             <div style={{ background: 'white', padding: '40px', borderRadius: '16px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                    <div style={{ width: 48, height: 48, background: 'linear-gradient(135deg,#f59e0b,#d97706)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 16px' }}>SK</div>
+                    <div style={{ width: 48, height: 48, background: 'linear-gradient(135deg,#f59e0b,#d97706)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 16px' }}>&#9728;&#65039;</div>
                     <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Welcome Back</h1>
-                    <p style={{ color: '#64748b', fontSize: '14px', marginTop: '8px' }}>Login to SuryaKiran Portal</p>
+                    <p style={{ color: '#64748b', fontSize: '14px', marginTop: '8px' }}>Sign in to SuryaKiran Control Panel</p>
                 </div>
 
-                {error && <div style={{ background: '#fef2f2', color: '#b91c1c', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px', border: '1px solid #f87171' }}>{error}</div>}
+                {error && (
+                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '12px', borderRadius: '8px', fontSize: '14px', marginBottom: '16px' }}>
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#334155', marginBottom: '6px' }}>Email Address</label>
-                        <input type='email' required value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }} placeholder='operator@suryakiran.com' />
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>Email</label>
+                        <input
+                            type='email'
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                            placeholder='you@example.com'
+                        />
                     </div>
                     <div>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#334155', marginBottom: '6px' }}>Password</label>
-                        <input type='password' required value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px' }} placeholder='••••••••' />
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>Password</label>
+                        <input
+                            type='password'
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                            placeholder='password'
+                        />
                     </div>
-
-                    <button type='submit' disabled={loading} style={{ background: '#f59e0b', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 600, fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '8px', transition: 'background 0.2s' }}>
+                    <button type='submit' disabled={loading} style={{ background: '#f59e0b', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 600, fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '8px', transition: 'background 0.2s', opacity: loading ? 0.7 : 1 }}>
                         {loading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>

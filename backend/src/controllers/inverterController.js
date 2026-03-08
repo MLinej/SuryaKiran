@@ -15,8 +15,7 @@ const getInverters = async (req, res, next) => {
             }
         });
 
-        // Map response to include latest risk score directly on inverter object if desired
-        const formattedInverters = inverters.map(inv => {
+        const formattedInverters = inverters.map((inv) => {
             const latestPrediction = inv.Predictions[0] || null;
             return {
                 id: inv.id,
@@ -25,7 +24,9 @@ const getInverters = async (req, res, next) => {
                 last_updated: inv.last_updated,
                 latest_risk_score: latestPrediction ? latestPrediction.risk_score : null,
                 latest_risk_level: latestPrediction ? latestPrediction.risk_level : null,
-                latest_power_kw: inv.Telemetry[0]?.power_kw ?? null
+                latest_power_kw: inv.Telemetry[0]?.power_kw ?? null,
+                latest_telemetry_at: inv.Telemetry[0]?.timestamp ?? null,
+                latest_prediction_at: latestPrediction?.created_at ?? null,
             };
         });
 
@@ -39,10 +40,7 @@ const getInverterById = async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        // Check if it exists
-        const inverter = await prisma.inverters.findUnique({
-            where: { id }
-        });
+        const inverter = await prisma.inverters.findUnique({ where: { id } });
 
         if (!inverter) {
             return res.status(404).json({ error: 'Inverter not found' });
@@ -73,7 +71,6 @@ const createInverter = async (req, res, next) => {
     try {
         const { id, block } = req.body;
 
-        // Ensure Inverter exists
         const inverter = await prisma.inverters.upsert({
             where: { id },
             update: { last_updated: new Date() },

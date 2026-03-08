@@ -57,28 +57,14 @@ const getPrediction = async (reading) => {
     } catch (error) {
         console.warn('[mlService] ML service error:', error.response?.data || error.message);
 
-        const temp = Number(reading.inverter_temp_c || 0);
-        const alarmCode = Number(reading.alarm_code || 0);
-        let risk_score = 10;
-        let risk_level = 'Healthy';
-        let explanation = 'Normal operation. No significant anomalies detected.';
-
-        if (alarmCode > 0 || temp > 75) {
-            risk_score = 85;
-            risk_level = 'Critical';
-            explanation = `Elevated temperature (${temp} C) or active alarm (code ${alarmCode}) detected. Immediate inspection recommended.`;
-        } else if (temp > 60) {
-            risk_score = 55;
-            risk_level = 'High';
-            explanation = `Inverter temperature (${temp} C) is above normal threshold. Monitor closely and schedule inspection.`;
-        }
+        console.warn(`[mlService] Model not found for ${reading.inverter_id} (or service offline). Marking as Untrained.`);
 
         return {
-            risk_score,
-            risk_level,
-            explanation,
-            current_status: risk_level,
-            current_score: risk_score / 100,
+            risk_score: 0,
+            risk_level: 'Untrained',
+            explanation: 'No CSV data provided. Please upload historical data to train the AI model for this inverter.',
+            current_status: 'Untrained',
+            current_score: 0,
             eta_display: null,
             eta_hours: null,
             primary_cause: null,

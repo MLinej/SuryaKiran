@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '@/components/Card';
 import { AlertCircle } from 'lucide-react';
 
-export function AlertsWidget({ alerts = { total: 0, critical: 0, warning: 0, info: 0 } }) {
+export function AlertsWidget({ alerts = { total: 0, critical: 0, warning: 0, info: 0 }, untrained = 0 }) {
     const hasCritical = alerts.critical > 0;
 
     return (
@@ -48,6 +48,13 @@ export function AlertsWidget({ alerts = { total: 0, critical: 0, warning: 0, inf
                     <span style={{ color: "#3b82f6" }}>Info</span>
                     <span style={{ color: "#f8fafc", fontWeight: 700 }}>{alerts.info}</span>
                 </div>
+
+                {untrained > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontFamily: "'DM Mono', monospace", borderTop: "1px dashed #334155", paddingTop: 8, marginTop: 4 }}>
+                        <span style={{ color: "#94a3b8" }}>Untrained (No CSV)</span>
+                        <span style={{ color: "#94a3b8", fontWeight: 700 }}>{untrained}</span>
+                    </div>
+                )}
             </div>
         </Card>
     );

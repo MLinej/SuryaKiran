@@ -69,13 +69,4 @@ def load_model(inv_id):
         print(f"[ml_service] Loaded '{inv_id}' model from disk cache.")
         return True
 
-    # ── FALLBACK: use any available trained model ─────────────────
-    pipe, hist = _get_any_trained_model()
-    if pipe is not None:
-        # Register it under the new inverter_id so predict works correctly
-        PIPELINES[inv_id] = pipe
-        HISTORY[inv_id] = hist
-        print(f"[ml_service] No specific model for '{inv_id}'. Using global fallback pipeline.")
-        return True
-
     return False

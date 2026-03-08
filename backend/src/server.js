@@ -1,5 +1,6 @@
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '..', '..', '.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env'), override: true });
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
@@ -17,9 +18,8 @@ const maintenanceRoutes = require('./routes/maintenance');
 const reportsRoutes = require('./routes/reports');
 const energyRoutes = require('./routes/energy');
 const analyticsRoutes = require('./routes/analytics');
-const chatRoutes = require('./routes/chat');
+const copilotRoutes = require('./routes/copilot');
 const forecastRoutes = require('./routes/forecast');
-
 
 const app = express();
 
@@ -27,6 +27,10 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+});
 
 // Swagger Options
 const swaggerOptions = {
@@ -62,9 +66,9 @@ app.use('/api/maintenance', requireAuth, maintenanceRoutes);
 app.use('/api/reports', requireAuth, reportsRoutes);
 app.use('/api/energy', requireAuth, energyRoutes);
 app.use('/api/analytics', requireAuth, analyticsRoutes);
-app.use('/api/chat', requireAuth, chatRoutes);
+app.use('/api/copilot', requireAuth, copilotRoutes);
+app.use('/api/chat', requireAuth, copilotRoutes); // backward compatibility
 app.use('/api/forecast', requireAuth, forecastRoutes);
-
 
 // Global Error Handler
 app.use(errorHandler);

@@ -50,6 +50,8 @@ const predictProbability = async (req, res, next) => {
             price_per_kwh_inr,
         });
 
+        console.log('Model prediction:', predictionResult);
+
         const {
             risk_score,
             risk_level,
@@ -147,3 +149,4 @@ const predictProbability = async (req, res, next) => {
 module.exports = {
     predictProbability,
 };
+

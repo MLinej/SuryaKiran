@@ -5,6 +5,7 @@ import { Clock, Upload } from 'lucide-react';
 
 const PredictionCell = ({ power, risk }) => {
     const getRiskColor = (r) => {
+        if (r === 'Unpredicted') return '#94a3b8';
         if (r < 30) return '#22c55e';
         if (r < 60) return '#f59e0b';
         return '#ef4444';
@@ -24,11 +25,15 @@ const PredictionCell = ({ power, risk }) => {
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '12px', color: '#64748b', fontFamily: "'DM Mono', monospace" }}>Power Output</span>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{power.toFixed(2)} kW</span>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: power === 'Unpredicted' ? '#94a3b8' : '#0f172a' }}>
+                    {power === 'Unpredicted' ? 'Unpredicted' : `${power.toFixed(2)} kW`}
+                </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '12px', color: '#64748b', fontFamily: "'DM Mono', monospace" }}>Risk Score</span>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: getRiskColor(risk) }}>{risk.toFixed(1)}%</span>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: getRiskColor(risk) }}>
+                    {risk === 'Unpredicted' ? 'Unpredicted' : `${risk.toFixed(1)}%`}
+                </span>
             </div>
         </div>
     );
@@ -134,10 +139,9 @@ export function InverterPredictionGrid({ inverters = [], onUploadClick }) {
                                         return { power: Number(fData.power[index] || 0), risk: normalizedRisk };
                                     }
 
-                                    const fallbackRisk = Number(inv.riskScore || 0);
                                     return {
-                                        power: Number(inv.power || 0),
-                                        risk: fallbackRisk <= 1 ? fallbackRisk * 100 : fallbackRisk,
+                                        power: 'Unpredicted',
+                                        risk: 'Unpredicted',
                                     };
                                 };
 
@@ -157,9 +161,17 @@ export function InverterPredictionGrid({ inverters = [], onUploadClick }) {
                                                 {inv.id}
                                             </div>
                                         </td>
-                                        <td><PredictionCell power={getPredictionForOffset(1).power} risk={getPredictionForOffset(1).risk} /></td>
-                                        <td><PredictionCell power={getPredictionForOffset(2).power} risk={getPredictionForOffset(2).risk} /></td>
-                                        <td><PredictionCell power={getPredictionForOffset(3).power} risk={getPredictionForOffset(3).risk} /></td>
+                                        {inv.status === 'Untrained' ? (
+                                            <td colSpan="3" style={{ textAlign: 'center', padding: '16px', color: '#94a3b8', fontSize: '13px', fontStyle: 'italic', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                                                Untrained Model — Upload CSV to enable live predictions.
+                                            </td>
+                                        ) : (
+                                            <>
+                                                <td><PredictionCell power={getPredictionForOffset(1).power} risk={getPredictionForOffset(1).risk} /></td>
+                                                <td><PredictionCell power={getPredictionForOffset(2).power} risk={getPredictionForOffset(2).risk} /></td>
+                                                <td><PredictionCell power={getPredictionForOffset(3).power} risk={getPredictionForOffset(3).risk} /></td>
+                                            </>
+                                        )}
                                     </tr>
                                 );
                             })

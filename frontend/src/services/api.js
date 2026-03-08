@@ -29,7 +29,8 @@ http.interceptors.response.use(
     }
 );
 
-const severityFromRisk = (score) => {
+const severityFromRisk = (score, explicitLabel = null) => {
+    if (explicitLabel === 'Untrained') return 'Untrained';
     if (score >= 80) return "High Risk";
     if (score >= 50) return "Medium Risk";
     return "Healthy";
@@ -64,7 +65,7 @@ const mapInverterRow = (inv) => {
         id: inv.id,
         block: inv.block || "Unknown",
         riskScore,
-        status: severityFromRisk(riskScore),
+        status: severityFromRisk(riskScore, inv.latest_risk_level),
         rawStatus: inv.status,
         lastUpdated: relativeTime(inv.last_updated),
         last_updated: inv.last_updated,
@@ -89,12 +90,13 @@ export const api = {
     },
 
     async getFleetSummary() {
-        const { data } = await http.get("/api/inverters");
+        const { data } = await http.get("/api/inverters", { params: { _t: Date.now() } });
         const inverters = data.map(mapInverterRow);
 
         const highRisk = inverters.filter((i) => i.status === "High Risk").length;
         const mediumRisk = inverters.filter((i) => i.status === "Medium Risk").length;
         const healthy = inverters.filter((i) => i.status === "Healthy").length;
+        const untrained = inverters.filter((i) => i.status === "Untrained").length;
         const totalPowerKw = inverters.reduce((sum, i) => sum + Number(i.power || 0), 0);
 
         return {
@@ -102,12 +104,13 @@ export const api = {
             highRisk,
             mediumRisk,
             healthy,
+            untrained,
             totalPower: `${(totalPowerKw / 1000).toFixed(2)} MW`,
         };
     },
 
     async getInverters(filters = {}) {
-        const { data } = await http.get("/api/inverters");
+        const { data } = await http.get("/api/inverters", { params: { _t: Date.now() } });
         let rows = data.map(mapInverterRow);
         if (filters.status && filters.status !== "All") {
             rows = rows.filter((r) => r.status === filters.status);
@@ -164,7 +167,7 @@ export const api = {
             id: inverter.id,
             block: inverter.block,
             riskScore,
-            status: severityFromRisk(riskScore),
+            status: severityFromRisk(riskScore, latestPrediction.risk_level),
             predictions: [
                 { day: "Current", risk: riskScore },
                 { day: "D+1", risk: riskScore },
@@ -194,7 +197,7 @@ export const api = {
     },
 
     async getAlerts() {
-        const { data } = await http.get("/api/alerts");
+        const { data } = await http.get("/api/alerts", { params: { _t: Date.now() } });
         return data.map((alert) => ({
             id: alert.id,
             severity: alert.severity === "High" ? "Critical" : alert.severity === "Healthy" ? "Info" : alert.severity,
@@ -244,11 +247,11 @@ export const api = {
     },
 
     async askCopilot(prompt, inverterId = null) {
-        const { data } = await http.post("/api/chat", {
-            message: prompt,
+        const { data } = await http.post("/api/copilot/chat", {
+            question: prompt,
             inverter_id: inverterId || null,
         });
-        return data.reply || "I couldn't generate a response. Please try again.";
+        return data.answer || data.reply || "I couldn't generate a response. Please try again.";
     },
 
     async uploadForecast(csvContent) {
@@ -292,6 +295,8 @@ export const api = {
         return data;
     },
 };
+
+
 
 
 
