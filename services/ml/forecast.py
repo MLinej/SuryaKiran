@@ -84,10 +84,14 @@ def parse_csv(content: str) -> dict:
     df = df.sort_values(["inverter_id", "timestamp"]).reset_index(drop=True)
 
     # Validate required columns
-    required = FEATURE_COLS + [TARGET_COL, "inverter_id", "timestamp"]
+    required = FEATURE_COLS + ["inverter_id", "timestamp"]
     missing  = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"Missing columns in CSV: {missing}")
+
+    # Create dummy target column if predicting future
+    if TARGET_COL not in df.columns:
+        df[TARGET_COL] = df.get("power_kw", df.get("power_t-1", 0.0))
 
     # Split by inverter
     inverters = {}
