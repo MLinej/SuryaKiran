@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { api } from '@/services/api';
-import { Plus, Send, User, MessageSquareText, Flame, Zap, Wrench, Trash2 } from 'lucide-react';
+import { Plus, Send, User, MessageSquareText, Flame, Zap, Wrench } from 'lucide-react';
 
 function renderAssistantContent(content) {
     const raw = String(content || '').trim();
@@ -91,22 +91,10 @@ function renderAssistantContent(content) {
     );
 }
 
-const relativeTime = (dateString) => {
-    if (!dateString) return "N/A";
-    const ms = Date.now() - new Date(dateString).getTime();
-    const mins = Math.max(1, Math.floor(ms / 60000));
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-};
-
 export default function Copilot() {
     const [messages, setMessages] = useState([
         { role: 'assistant', content: "Hello! I'm the SuryaKiran AI Copilot. Ask me about inverter risk, alerts, maintenance, or plant performance." }
     ]);
-    const [sessions, setSessions] = useState([]);
-    const [currentSessionId, setCurrentSessionId] = useState(null);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const bottomRef = useRef(null);
@@ -118,114 +106,22 @@ export default function Copilot() {
     ];
 
     useEffect(() => {
-        const fetchSessions = async () => {
-            try {
-                const data = await api.getChatSessions();
-                setSessions(data);
-                if (data.length > 0) {
-                    handleSelectSession(data[0].id);
-                }
-            } catch (error) {
-                console.error('Failed to fetch sessions:', error);
-            }
-        };
-        fetchSessions();
-    }, []);
-
-    useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isLoading]);
-
-    const handleSelectSession = async (sessionId) => {
-        setCurrentSessionId(sessionId);
-        setIsLoading(true);
-        try {
-            const data = await api.getChatSessionMessages(sessionId);
-            const formattedMessages = data.Messages.map(m => ({
-                role: m.role === 'model' ? 'assistant' : 'user',
-                content: m.content
-            }));
-            setMessages(formattedMessages.length > 0 ? formattedMessages : [
-                { role: 'assistant', content: "Hello! I'm the SuryaKiran AI Copilot. How can I help you?" }
-            ]);
-        } catch (error) {
-            console.error('Failed to load session:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleNewChat = () => {
-        setCurrentSessionId(null);
-        setMessages([
-            { role: 'assistant', content: "Hello! I'm the SuryaKiran AI Copilot. Ask me about inverter risk, alerts, maintenance, or plant performance." }
-        ]);
-    };
-
-    const handleDeleteSession = async (e, sessionId) => {
-        e.stopPropagation();
-        if (!window.confirm('Are you sure you want to delete this conversation?')) return;
-        try {
-            await api.deleteChatSession(sessionId);
-            setSessions(prev => prev.filter(s => s.id !== sessionId));
-            if (currentSessionId === sessionId) {
-                handleNewChat();
-            }
-        } catch (error) {
-            console.error('Failed to delete session:', error);
-        }
-    };
 
     const handleSend = async (text) => {
         const prompt = text || input;
         if (!prompt.trim()) return;
 
-        let sessionId = currentSessionId;
-
-        // Optimistically add user message to UI
         setMessages((prev) => [...prev, { role: 'user', content: prompt }]);
         setInput('');
         setIsLoading(true);
 
         try {
-            // 1. Ensure we have a session
-            if (!sessionId) {
-                const newSession = await api.createChatSession(prompt.substring(0, 50));
-                sessionId = newSession.id;
-                setCurrentSessionId(sessionId);
-                setSessions(prev => [newSession, ...prev]);
-            }
-
-            // 2. Save user message to DB
-            await api.saveChatMessage(sessionId, 'user', prompt);
-
-            // 3. Get AI response
-            const response = await api.askCopilot(prompt, null, sessionId);
-
-            let assistantMessage = '';
-            let confidence = 0.85;
-            let provider = 'gemini';
-
-            if (response && response.error) {
-                assistantMessage = response.error;
-            } else {
-                assistantMessage = response.answer;
-                confidence = response.confidence;
-                provider = response.provider;
-            }
-
-            // 4. Save AI response to DB
-            await api.saveChatMessage(sessionId, 'model', assistantMessage);
-
-            setMessages((prev) => [...prev, { role: 'assistant', content: assistantMessage }]);
-
-            // 5. Refresh sessions list to update active titles/timestamps
-            const freshSessions = await api.getChatSessions();
-            setSessions(freshSessions);
-
-        } catch (error) {
-            const errorMsg = 'I encountered an error querying the telemetry database. Please try again.';
-            setMessages((prev) => [...prev, { role: 'assistant', content: errorMsg }]);
+            const response = await api.askCopilot(prompt);
+            setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+        } catch (_e) {
+            setMessages((prev) => [...prev, { role: 'assistant', content: 'I encountered an error querying the telemetry database. Please try again.' }]);
         } finally {
             setIsLoading(false);
         }
@@ -233,73 +129,35 @@ export default function Copilot() {
 
     return (
         <div style={{ display: 'flex', height: 'calc(100vh - 130px)', gap: 24, animation: 'fadeSlideIn 0.4s ease' }}>
-            {/* Sidebar */}
-            <div style={{ flex: '0 0 280px', background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', padding: 20 }}>
-                <button
-                    onClick={handleNewChat}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12,
-                        background: 'linear-gradient(135deg,#f5f7fa,#eef2f6)', border: '1px dashed #cbd5e1',
-                        fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, color: '#475569',
-                        cursor: 'pointer', transition: 'all 0.2s'
-                    }}
+            <div style={{ flex: '0 0 260px', background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', padding: 24 }}>
+                <button style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12,
+                    background: 'linear-gradient(135deg,#f5f7fa,#eef2f6)', border: '1px dashed #cbd5e1',
+                    fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, color: '#475569',
+                    cursor: 'pointer', transition: 'all 0.2s'
+                }}
                     onMouseEnter={(e) => e.currentTarget.style.borderColor = '#94a3b8'}
                     onMouseLeave={(e) => e.currentTarget.style.borderColor = '#cbd5e1'}
-                >
+                    onClick={() => setMessages([{ role: 'assistant', content: "Hello! I'm the SuryaKiran AI Copilot. How can I help you?" }])}>
                     <Plus size={16} /> New Chat
                 </button>
 
-                <div style={{ marginTop: 24, flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+                <div style={{ marginTop: 32, flex: 1, overflowY: 'auto' }}>
                     <h4 style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>Recent Context</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {sessions.map((session) => (
-                            <div
-                                key={session.id}
-                                onClick={() => handleSelectSession(session.id)}
-                                group="session-item"
-                                style={{
-                                    padding: '10px 12px', borderRadius: 12, fontSize: 13, color: currentSessionId === session.id ? '#1e293b' : '#64748b',
-                                    background: currentSessionId === session.id ? '#f1f5f9' : 'transparent',
-                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    transition: 'all 0.2s', position: 'relative'
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (currentSessionId !== session.id) e.currentTarget.style.background = '#f8fafc';
-                                    const trash = e.currentTarget.querySelector('.trash-icon');
-                                    if (trash) trash.style.opacity = '1';
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (currentSessionId !== session.id) e.currentTarget.style.background = 'transparent';
-                                    const trash = e.currentTarget.querySelector('.trash-icon');
-                                    if (trash) trash.style.opacity = '0';
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
-                                    <MessageSquareText size={14} style={{ flexShrink: 0, color: currentSessionId === session.id ? '#f59e0b' : '#94a3b8' }} />
-                                    <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                                        <span style={{ fontWeight: currentSessionId === session.id ? 600 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.title}</span>
-                                        <span style={{ fontSize: 10, color: '#94a3b8' }}>{relativeTime(session.updatedAt)}</span>
-                                    </div>
-                                </div>
-                                <button
-                                    className="trash-icon"
-                                    onClick={(e) => handleDeleteSession(e, session.id)}
-                                    style={{ opacity: 0, transition: 'opacity 0.2s', border: 'none', background: 'transparent', padding: 4, cursor: 'pointer', color: '#94a3b8' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
-                                >
-                                    <Trash2 size={14} />
-                                </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {[].map((item, i) => (
+                            <div key={i} style={{
+                                padding: '10px 12px', borderRadius: 8, fontSize: 13, color: '#475569',
+                                cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                            }} onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                                <MessageSquareText size={14} style={{ display: 'inline', verticalAlign: 'bottom', marginRight: 8, color: '#94a3b8' }} />
+                                {item}
                             </div>
                         ))}
-                        {sessions.length === 0 && (
-                            <div style={{ textAlign: 'center', padding: 20, color: '#94a3b8', fontSize: 12 }}>No recent chats</div>
-                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Chat Area */}
             <div style={{ flex: 1, background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 24 }}>
                     {messages.map((msg, i) => (
@@ -308,6 +166,7 @@ export default function Copilot() {
                             alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
                             flexDirection: msg.role === 'user' ? 'row-reverse' : 'row'
                         }}>
+
                             <div style={{
                                 width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
                                 background: msg.role === 'user' ? '#f1f5f9' : 'linear-gradient(135deg,#f59e0b,#d97706)',
@@ -345,7 +204,7 @@ export default function Copilot() {
                 </div>
 
                 <div style={{ padding: '0 40px 32px 40px' }}>
-                    {messages.length <= 1 && !isLoading && (
+                    {messages.length === 1 && (
                         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16, justifyContent: 'center' }}>
                             {suggestedPrompts.map((p, i) => (
                                 <button key={i} onClick={() => handleSend(p.text)} style={{
