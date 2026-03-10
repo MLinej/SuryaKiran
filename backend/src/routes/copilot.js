@@ -128,17 +128,27 @@ async function callOpenAI(prompt) {
     }
 }
 
-async function callGemini(prompt) {
+async function callGemini(prompt, history = []) {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return null;
+    if (!apiKey) return { error: 'Gemini API key is missing. Please check your .env file.', provider: 'gemini' };
 
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    // Transform history to Gemini format: { role: "user" | "model", parts: [{ text: "..." }] }
+    // Gemini roles are "user" and "model".
+    const contents = history.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+    }));
+
+    // Add current prompt
+    contents.push({ role: 'user', parts: [{ text: prompt }] });
 
     try {
         const { data } = await axios.post(
             url,
-            { contents: [{ parts: [{ text: prompt }] }] },
+            { contents },
             { headers: { 'Content-Type': 'application/json' }, timeout: 60000 }
         );
 
@@ -155,8 +165,13 @@ async function callGemini(prompt) {
             provider: 'gemini',
         };
     } catch (error) {
-        console.error('[copilot][gemini] request failed:', error.response?.status || error.message, error.response?.data);
-        return null;
+        const errorMsg = error.response?.data?.error?.message || error.message;
+        console.error('[copilot][gemini] request failed:', errorMsg);
+        return {
+            error: `Gemini API Error: ${errorMsg}`,
+            provider: 'gemini',
+            status: error.response?.status || 500
+        };
     }
 }
 
@@ -180,9 +195,22 @@ async function processCopilotRequest(req, res, next) {
     try {
         const question = String(req.body?.question || req.body?.message || '').trim();
         const inverterId = req.body?.inverter_id || null;
+        const sessionId = req.body?.sessionId || null;
 
         if (!question) {
             return res.status(400).json({ error: 'question is required' });
+        }
+
+        // Fetch history if sessionId is provided
+        let history = [];
+        if (sessionId) {
+            const session = await prisma.chatSession.findUnique({
+                where: { id: sessionId },
+                include: { Messages: { orderBy: { createdAt: 'asc' } } }
+            });
+            if (session && session.userId === req.user.id) {
+                history = session.Messages.map(m => ({ role: m.role, content: m.content }));
+            }
         }
 
         const context = await fetchContext(inverterId);
@@ -193,16 +221,33 @@ async function processCopilotRequest(req, res, next) {
 
         if (preferred === 'openai') {
             llmResult = await callOpenAI(prompt);
-            if (!llmResult) llmResult = await callGemini(prompt);
+            if (!llmResult) llmResult = await callGemini(prompt, history);
         } else if (preferred === 'gemini') {
-            llmResult = await callGemini(prompt);
+            llmResult = await callGemini(prompt, history);
+            // If Gemini returned an error object, we'll return it instead of falling back
+            if (llmResult && llmResult.error) {
+                return res.status(llmResult.status || 500).json({
+                    error: llmResult.error,
+                    provider: 'gemini',
+                    question
+                });
+            }
             if (!llmResult) llmResult = await callOpenAI(prompt);
         } else {
             llmResult = await callOpenAI(prompt);
-            if (!llmResult) llmResult = await callGemini(prompt);
+            if (!llmResult) llmResult = await callGemini(prompt, history);
         }
 
         const result = llmResult || localFallback(question, context);
+
+        // Handle case where fallback was needed but error object came from provider
+        if (result.error) {
+            return res.status(result.status || 500).json({
+                error: result.error,
+                provider: result.provider,
+                question
+            });
+        }
 
         return res.json({
             answer: result.answer,
@@ -218,6 +263,97 @@ async function processCopilotRequest(req, res, next) {
         return next(error);
     }
 }
+
+router.get('/sessions', async (req, res, next) => {
+    try {
+        const sessions = await prisma.chatSession.findMany({
+            where: { userId: req.user.id },
+            orderBy: { updatedAt: 'desc' }
+        });
+        res.json(sessions);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/sessions', async (req, res, next) => {
+    try {
+        const { title } = req.body;
+        const session = await prisma.chatSession.create({
+            data: {
+                userId: req.user.id,
+                title: title || 'New Chat'
+            }
+        });
+        res.status(201).json(session);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/sessions/:sessionId', async (req, res, next) => {
+    try {
+        const { sessionId } = req.params;
+        const session = await prisma.chatSession.findUnique({
+            where: { id: sessionId },
+            include: {
+                Messages: { orderBy: { createdAt: 'asc' } }
+            }
+        });
+        if (!session || session.userId !== req.user.id) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        res.json(session);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/sessions/:sessionId/messages', async (req, res, next) => {
+    try {
+        const { sessionId } = req.params;
+        const { role, content } = req.body;
+
+        const session = await prisma.chatSession.findUnique({ where: { id: sessionId } });
+        if (!session || session.userId !== req.user.id) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const message = await prisma.chatMessage.create({
+            data: { sessionId, role, content }
+        });
+
+        // Update session updatedAt and potentially title if it's the first message
+        const updateData = { updatedAt: new Date() };
+        if (session.title === 'New Chat' && role === 'user') {
+            updateData.title = content.substring(0, 50);
+        }
+
+        await prisma.chatSession.update({
+            where: { id: sessionId },
+            data: updateData
+        });
+
+        res.status(201).json(message);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.delete('/sessions/:sessionId', async (req, res, next) => {
+    try {
+        const { sessionId } = req.params;
+        const session = await prisma.chatSession.findUnique({ where: { id: sessionId } });
+        if (!session || session.userId !== req.user.id) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        await prisma.chatSession.delete({ where: { id: sessionId } });
+        res.json({ message: 'Session deleted' });
+    } catch (error) {
+        next(error);
+    }
+});
 
 router.post('/chat', processCopilotRequest);
 router.post('/', processCopilotRequest);

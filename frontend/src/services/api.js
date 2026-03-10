@@ -246,16 +246,49 @@ export const api = {
         return data;
     },
 
-    async askCopilot(prompt, inverterId = null) {
+    async askCopilot(prompt, inverterId = null, sessionId = null) {
         const { data } = await http.post("/api/copilot/chat", {
             question: prompt,
             inverter_id: inverterId || null,
+            sessionId: sessionId || null,
         });
-        return data.answer || data.reply || "I couldn't generate a response. Please try again.";
+        if (data.error) return { error: data.error };
+        return data;
     },
 
-    async uploadForecast(csvContent) {
-        const { data } = await http.post("/api/forecast/upload", { file_content: csvContent });
+    async getChatSessions() {
+        const { data } = await http.get("/api/copilot/sessions");
+        return data;
+    },
+
+    async createChatSession(title) {
+        const { data } = await http.post("/api/copilot/sessions", { title });
+        return data;
+    },
+
+    async getChatSessionMessages(sessionId) {
+        const { data } = await http.get(`/api/copilot/sessions/${sessionId}`);
+        return data;
+    },
+
+    async saveChatMessage(sessionId, role, content) {
+        const { data } = await http.post(`/api/copilot/sessions/${sessionId}/messages`, {
+            role,
+            content,
+        });
+        return data;
+    },
+
+    async deleteChatSession(sessionId) {
+        const { data } = await http.delete(`/api/copilot/sessions/${sessionId}`);
+        return data;
+    },
+
+    async uploadForecast(csvContent, onUploadProgress) {
+        const { data } = await http.post("/api/forecast/upload",
+            { file_content: csvContent },
+            { onUploadProgress }
+        );
         return data;
     },
 

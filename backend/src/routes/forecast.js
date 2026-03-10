@@ -130,7 +130,35 @@ router.post('/upload', async (req, res) => {
 
         const persisted = {};
         for (const inverterId of inverterIds) {
-            persisted[inverterId] = await saveForecastPoints(upload.id, inverterId, 'csv-trained');
+            const forecast = await saveForecastPoints(upload.id, inverterId, 'csv-trained');
+            persisted[inverterId] = forecast;
+
+            // NEW: Update Inverters table status and create a Prediction entry
+            // This ensures the dashboard moves from "Untrained" to "Healthy/At Risk"
+            const latestRisk = forecast.risk[0] || 0;
+            const latestPower = forecast.power[0] || 0;
+            const riskLevel = latestRisk >= 80 ? 'Critical' : latestRisk >= 50 ? 'High' : 'Healthy';
+
+            await prisma.$transaction([
+                prisma.inverters.update({
+                    where: { id: inverterId },
+                    data: {
+                        status: riskLevel === 'Healthy' ? 'Healthy' : 'At Risk',
+                        last_updated: new Date()
+                    }
+                }),
+                prisma.predictions.create({
+                    data: {
+                        inverter_id: inverterId,
+                        risk_score: latestRisk,
+                        risk_level: riskLevel,
+                        explanation: `Forecast updated via CSV upload. Initial predicted power: ${latestPower.toFixed(2)} kW.`,
+                        current_status: 'Analysis Ready',
+                        current_score: latestRisk,
+                        model_output: JSON.stringify({ source: 'csv-upload', timestamp: new Date() })
+                    }
+                })
+            ]);
         }
 
         return res.json({

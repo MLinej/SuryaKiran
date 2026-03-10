@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { X, AlertCircle, FileUp, CheckCircle2 } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { X, AlertCircle, FileUp, CheckCircle2, FileText, Loader2 } from 'lucide-react';
+import { api } from '@/services/api';
 
 const EXPECTED_COLUMNS = [
     "timestamp", "inverter_id", "hour", "minute", "sin_time", "cos_time",
@@ -7,96 +8,87 @@ const EXPECTED_COLUMNS = [
     "rolling_mean_5", "rolling_std_5", "pv_voltage", "pv_current", "target_power"
 ];
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILES = 5;
+
 export function CSVUploadModal({ isOpen, onClose, onUploadSuccess }) {
-    const [error, setError] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
+    const [files, setFiles] = useState([]);
+    const [globalError, setGlobalError] = useState(null);
 
     if (!isOpen) return null;
 
-    const validateCSV = (rows) => {
-        if (rows.length === 0) return "CSV file is empty.";
+    const validateCSV = (text) => {
+        const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+        if (lines.length < 2) return "CSV file is empty or missing data.";
 
-        const headers = Object.keys(rows[0]);
-
-        // 1. Check all required columns exist and match exactly
+        const headers = lines[0].split(",").map(h => h.trim());
         if (headers.length !== EXPECTED_COLUMNS.length) {
-            return `Invalid CSV format. Expected ${EXPECTED_COLUMNS.length} columns, found ${headers.length}.`;
+            return `Invalid format. Expected ${EXPECTED_COLUMNS.length} columns, found ${headers.length}.`;
         }
 
         for (let i = 0; i < EXPECTED_COLUMNS.length; i++) {
             if (headers[i] !== EXPECTED_COLUMNS[i]) {
-                return `Invalid CSV format. Column ${i + 1} should be "${EXPECTED_COLUMNS[i]}" but found "${headers[i]}".`;
+                return `Invalid format. Column ${i + 1} should be "${EXPECTED_COLUMNS[i]}".`;
             }
         }
-
-        // 2. Check for null/empty values
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            for (const col of EXPECTED_COLUMNS) {
-                if (row[col] === undefined || row[col] === null || row[col].toString().trim() === "") {
-                    return `Missing data at row ${i + 1}, column "${col}". All fields must be valid and complete.`;
-                }
-            }
-        }
-
         return null;
     };
 
-    const handleFileChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const uploadFile = async (file) => {
+        const fileId = Math.random().toString(36).substring(7);
+        const newFile = { id: fileId, name: file.name, progress: 0, status: 'uploading', error: null };
 
-        setError(null);
-        setIsUploading(true);
+        setFiles(prev => [...prev, newFile]);
+
+        // Validation
+        if (file.size > MAX_FILE_SIZE) {
+            updateFileState(fileId, { status: 'error', error: 'File exceeds 20MB limit' });
+            return;
+        }
 
         const reader = new FileReader();
-        reader.onload = async (event) => {
-            const text = event.target.result;
-            const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-
-            if (lines.length < 2) {
-                setError("Invalid CSV format. The file is empty or missing data.");
-                setIsUploading(false);
-                return;
-            }
-
-            const headers = lines[0].split(",");
-            const rows = lines.slice(1).map(line => {
-                const values = line.split(",");
-                const obj = {};
-                headers.forEach((header, i) => {
-                    obj[header.trim()] = values[i];
-                });
-                return obj;
-            });
-
-            const validationError = validateCSV(rows);
+        reader.onload = async (e) => {
+            const content = e.target.result;
+            const validationError = validateCSV(content);
             if (validationError) {
-                setError(validationError);
-                setIsUploading(false);
+                updateFileState(fileId, { status: 'error', error: validationError });
                 return;
             }
 
             try {
-                // Send JSON-ified data to backend proxy
-                // The ML service expects { "filepath": ... } or multipart, 
-                // but we can also modify it to accept raw content if needed.
-                // For now, let's assume we send the content as a string.
-                onUploadSuccess(text);
-                onClose();
+                await api.uploadForecast(content, (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    updateFileState(fileId, { progress: percentCompleted });
+                });
+                updateFileState(fileId, { status: 'success', progress: 100 });
+                if (onUploadSuccess) onUploadSuccess();
             } catch (err) {
-                setError("Failed to process prediction data. Please try again.");
-            } finally {
-                setIsUploading(false);
+                const msg = err.response?.data?.error || "Upload failed";
+                updateFileState(fileId, { status: 'error', error: msg });
             }
         };
 
         reader.onerror = () => {
-            setError("Error reading file.");
-            setIsUploading(false);
+            updateFileState(fileId, { status: 'error', error: 'Failed to read file' });
         };
 
         reader.readAsText(file);
+    };
+
+    const updateFileState = (id, updates) => {
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
+    const handleFileChange = (e) => {
+        const selectedFiles = Array.from(e.target.files);
+        setGlobalError(null);
+
+        if (files.length + selectedFiles.length > MAX_FILES) {
+            setGlobalError(`You can only upload up to ${MAX_FILES} files.`);
+            return;
+        }
+
+        selectedFiles.forEach(uploadFile);
     };
 
     return (
@@ -115,7 +107,7 @@ export function CSVUploadModal({ isOpen, onClose, onUploadSuccess }) {
                 background: "white",
                 borderRadius: "16px",
                 width: "100%",
-                maxWidth: "500px",
+                maxWidth: "550px",
                 boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
                 overflow: "hidden"
             }}>
@@ -124,22 +116,24 @@ export function CSVUploadModal({ isOpen, onClose, onUploadSuccess }) {
                     <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}><X size={20} /></button>
                 </div>
 
-                <div style={{ padding: "32px 24px" }}>
+                <div style={{ padding: "24px" }}>
                     <div style={{
                         border: "2px dashed #e2e8f0",
                         borderRadius: "12px",
-                        padding: "40px 24px",
+                        padding: "32px 24px",
                         textAlign: "center",
                         background: "#f8fafc",
-                        position: "relative"
+                        position: "relative",
+                        marginBottom: "24px"
                     }}>
-                        <FileUp size={48} color="#94a3b8" style={{ marginBottom: "16px" }} />
-                        <h4 style={{ fontSize: "16px", fontWeight: 600, color: "#0f172a", marginBottom: "8px" }}>Drop CSV file here</h4>
-                        <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "24px" }}>or click to browse from your computer</p>
+                        <FileUp size={40} color="#94a3b8" style={{ marginBottom: "12px" }} />
+                        <h4 style={{ fontSize: "15px", fontWeight: 600, color: "#0f172a", marginBottom: "4px" }}>Select CSV files</h4>
+                        <p style={{ fontSize: "12px", color: "#64748b", marginBottom: "0" }}>Max 20MB per file, up to 5 files</p>
 
                         <input
                             type="file"
                             accept=".csv"
+                            multiple
                             onChange={handleFileChange}
                             style={{
                                 position: "absolute",
@@ -148,35 +142,57 @@ export function CSVUploadModal({ isOpen, onClose, onUploadSuccess }) {
                                 cursor: "pointer"
                             }}
                         />
-
-                        {isUploading && (
-                            <div style={{ marginTop: "16px", fontSize: "14px", color: "#3b82f6", fontWeight: 600 }}>
-                                Validating schema...
-                            </div>
-                        )}
                     </div>
 
-                    {error && (
-                        <div style={{
-                            marginTop: "20px",
-                            padding: "16px",
-                            background: "#fef2f2",
-                            border: "1px solid #fee2e2",
-                            borderRadius: "8px",
-                            display: "flex",
-                            gap: "12px"
-                        }}>
-                            <AlertCircle size={20} color="#ef4444" style={{ flexShrink: 0 }} />
-                            <p style={{ fontSize: "13px", color: "#991b1b", lineHeight: 1.5, margin: 0 }}>{error}</p>
+                    {globalError && (
+                        <div style={{ marginBottom: "16px", padding: "12px", background: "#fef2f2", border: "1px solid #fee2e2", borderRadius: "8px", display: "flex", gap: "8px", alignItems: "center" }}>
+                            <AlertCircle size={16} color="#ef4444" />
+                            <p style={{ fontSize: "13px", color: "#991b1b", margin: 0 }}>{globalError}</p>
                         </div>
                     )}
 
-                    <div style={{ marginTop: "24px", padding: "16px", background: "#f1f5f9", borderRadius: "8px" }}>
-                        <h5 style={{ fontSize: "12px", fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>Required Schema Order:</h5>
+                    {files.length > 0 && (
+                        <div style={{ marginBottom: "24px" }}>
+                            <h5 style={{ fontSize: "12px", fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>File Submissions</h5>
+                            <div style={{ border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
+                                {files.map((file) => (
+                                    <div key={file.id} style={{ padding: "16px", borderBottom: file === files[files.length - 1] ? "none" : "1px solid #f1f5f9" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: file.status === 'uploading' ? "8px" : "0" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
+                                                <FileText size={18} color="#64748b" />
+                                                <span style={{ fontSize: "14px", fontWeight: 500, color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{file.name}</span>
+                                            </div>
+                                            <div>
+                                                {file.status === 'success' && <CheckCircle2 size={18} color="#10b981" />}
+                                                {file.status === 'error' && <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 600 }}>{file.error}</span>}
+                                                {file.status === 'uploading' && <span style={{ fontSize: "12px", color: "#64748b", fontFamily: "'DM Mono', monospace" }}>{file.progress}%</span>}
+                                            </div>
+                                        </div>
+
+                                        {file.status === 'uploading' && (
+                                            <div style={{ width: "100%", height: "6px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden" }}>
+                                                <div style={{
+                                                    width: `${file.progress}%`,
+                                                    height: "100%",
+                                                    background: "#2563EB",
+                                                    transition: "width 0.3s ease",
+                                                    borderRadius: "10px"
+                                                }} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{ padding: "16px", background: "#f1f5f9", borderRadius: "8px" }}>
+                        <h5 style={{ fontSize: "11px", fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" }}>Required Columns:</h5>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                            {EXPECTED_COLUMNS.map(col => (
-                                <span key={col} style={{ fontSize: "10px", background: "white", padding: "4px 8px", borderRadius: "4px", color: "#64748b", border: "1px solid #e2e8f0", fontFamily: "'DM Mono', monospace" }}>{col}</span>
+                            {EXPECTED_COLUMNS.slice(0, 8).map(col => (
+                                <span key={col} style={{ fontSize: "10px", background: "white", padding: "3px 8px", borderRadius: "4px", color: "#64748b", border: "1px solid #e2e8f0", fontFamily: "'DM Mono', monospace" }}>{col}</span>
                             ))}
+                            <span style={{ fontSize: "10px", background: "white", padding: "3px 8px", borderRadius: "4px", color: "#64748b", border: "1px solid #e2e8f0" }}>...and {EXPECTED_COLUMNS.length - 8} more</span>
                         </div>
                     </div>
                 </div>
@@ -184,3 +200,4 @@ export function CSVUploadModal({ isOpen, onClose, onUploadSuccess }) {
         </div>
     );
 }
+

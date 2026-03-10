@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Inverters {
@@ -87,6 +87,26 @@ model Users {
   password         String
   role             String           @default("operator")
   forecast_uploads ForecastUpload[]
+  chat_sessions    ChatSession[]
+}
+
+model ChatSession {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  User      Users     @relation(fields: [userId], references: [id])
+  Messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String    @id @default(uuid())
+  sessionId String
+  role      String    // "user" or "model"
+  content   String
+  createdAt DateTime  @default(now())
+  Session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model Maintenance {

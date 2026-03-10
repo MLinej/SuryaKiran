@@ -15,20 +15,19 @@ export default function Dashboard() {
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    const handleUploadSuccess = async (csvContent) => {
+    const handleUploadComplete = async () => {
         try {
-            await api.uploadForecast(csvContent);
+            setRefreshTrigger(prev => prev + 1);
             const [sumData, invData] = await Promise.all([
                 api.getFleetSummary(),
                 api.getInverters(),
             ]);
             setSummary(sumData);
             setInverters([...invData]);
-            alert('Forecast data uploaded and processed successfully!');
         } catch (error) {
-            console.error('Upload error:', error);
-            alert('Failed to process forecast data on the server.');
+            console.error('Data refresh error:', error);
         }
     };
 
@@ -116,13 +115,17 @@ export default function Dashboard() {
                     </div>
 
                     <div style={{ display: 'flex' }}>
-                        <InverterPredictionGrid inverters={inverters} onUploadClick={() => setIsUploadModalOpen(true)} />
+                        <InverterPredictionGrid
+                            inverters={inverters}
+                            onUploadClick={() => setIsUploadModalOpen(true)}
+                            refreshTrigger={refreshTrigger}
+                        />
                     </div>
 
                     <CSVUploadModal
                         isOpen={isUploadModalOpen}
                         onClose={() => setIsUploadModalOpen(false)}
-                        onUploadSuccess={handleUploadSuccess}
+                        onUploadSuccess={handleUploadComplete}
                     />
 
                     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', minHeight: 500 }}>

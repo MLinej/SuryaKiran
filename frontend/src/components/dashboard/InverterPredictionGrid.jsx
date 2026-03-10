@@ -39,7 +39,7 @@ const PredictionCell = ({ power, risk }) => {
     );
 };
 
-export function InverterPredictionGrid({ inverters = [], onUploadClick }) {
+export function InverterPredictionGrid({ inverters = [], onUploadClick, refreshTrigger = 0 }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [forecastData, setForecastData] = useState({});
 
@@ -57,9 +57,17 @@ export function InverterPredictionGrid({ inverters = [], onUploadClick }) {
         return () => clearTimeout(timeoutId);
     }, []);
 
+    // Clear specific forecast data when a refresh is triggered
+    useEffect(() => {
+        if (refreshTrigger > 0) {
+            setForecastData({});
+        }
+    }, [refreshTrigger]);
+
     useEffect(() => {
         inverters.forEach((inv) => {
-            if (!forecastData[inv.id]) {
+            // Only fetch if we don't have data OR if we're explicitly told to refresh (handled by clearing state above)
+            if (!forecastData[inv.id] && inv.status !== 'Untrained') {
                 api.getForecastAll(inv.id)
                     .then((res) => {
                         if (!res.error) {
@@ -69,7 +77,7 @@ export function InverterPredictionGrid({ inverters = [], onUploadClick }) {
                     .catch((e) => console.error('Forecast fetch error for', inv.id, e));
             }
         });
-    }, [inverters, forecastData]);
+    }, [inverters, forecastData, refreshTrigger]);
 
     const formatTime = (date, offsetMins = 0) => {
         const newDate = new Date(date.getTime() + offsetMins * 60000);
