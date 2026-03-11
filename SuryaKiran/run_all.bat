@@ -1,0 +1,13 @@
+@echo off
+echo Starting SuryaKiran Services...
+
+echo Starting Backend...
+start cmd /k "cd backend && npm run dev"
+
+echo Starting Frontend...
+start cmd /k "cd frontend && npm run dev"
+
+echo Starting ML Service...
+start cmd /k "cd services\ml && python app.py"
+
+echo All services are starting in separate windows.
