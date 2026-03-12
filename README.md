@@ -15,6 +15,7 @@ Developed as part of an **AI-powered renewable energy analytics project**, combi
 | **[Het]** | Backend Engineer | [Nirma University] | 2028 | [24bce261@nirmauni.ac.in](mailto:24bce261@nirmauni.ac.in) / [9023226077] | [@Het6518](https://github.com/Het6518) |
 | **[Darshan]** | ML Engineer | [Nirma University] | 2028 | [24bce233@nirmauni.ac.in](mailto:24bce233@nirmauni.ac.in) / [9328325601] | [@darshanNhb](https://github.com/darshanNhb) |
 | **[Jenil]** | Frontend Engineer | [Nirma University] | 2028 | [24bce267@nirmauni.ac.in](mailto:24bce267@nirmauni.ac.in) / [9316130701] | [@MLinej](https://github.com/MLinej) |
+| **[Poojan]** | API Integration Engineer | [Nirma University] | 2028 | [24bce034@nirmauni.ac.in] (mailto:24bce034@nirmauni.ac.in) / [9978513268] | [@poojanparekh-26](https://github.com/poojanparekh-26) |
 
 ---
 
