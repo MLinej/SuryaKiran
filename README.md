@@ -94,10 +94,14 @@ Interactive React dashboard with:
 - Health status indicators
 - Alert history and trends
 
-### 🤖 AI Copilot Assistant
-Natural language Q&A powered by LLM integration. Operators can ask:
-> *"Why is Inverter 3 showing abnormal behavior?"*
-> *"Which inverters are at risk this week?"*
+### 🤖 AI Copilot Assistant (v2)
+Natural language Q&A powered by **Schema-Aware Two-Pass RAP** (Retrieval Augmented Prompting). 
+- **Dynamic Retrieval**: Generates precise database query plans from the Prisma schema to fetch only relevant telemetry/alerts.
+- **Rich UI Output**: Renders data-heavy insights as interactive, styled React tables with risk-level badges.
+- **Context Grounding**: Accurate, multi-table analysis for questions like:
+  > *"Why is Inverter 7 flagged as critical?"*
+  > *"Which inverters are at risk this week?"*
+  > *"What maintenance is pending for block A?"*
 
 The Copilot generates **contextual explanations** using live system data and model predictions via Retrieval Augmented Prompting.
 
