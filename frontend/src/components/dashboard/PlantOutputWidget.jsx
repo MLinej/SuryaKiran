@@ -5,7 +5,7 @@ import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 
 export function PlantOutputWidget({ output = "0 MW", trendData = [] }) {
     return (
-        <Card style={{ flex: "1 1 Minimum", display: "flex", flexDirection: "column", background: "#0f172a", color: "white", padding: 24, position: "relative", overflow: "hidden" }}>
+        <Card style={{ flex: "1 1 auto", display: "flex", flexDirection: "column", background: "#0f172a", color: "white", padding: 24, position: "relative", overflow: "hidden", minHeight: 180 }}>
             {/* Background Glow */}
             <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "rgba(245,158,11,0.15)", filter: "blur(30px)", borderRadius: "50%" }} />
 
@@ -29,7 +29,7 @@ export function PlantOutputWidget({ output = "0 MW", trendData = [] }) {
                 </div>
             </div>
 
-            <div style={{ flex: 1, minHeight: 60, marginTop: "auto" }}>
+            <div style={{ flex: 1, minHeight: 80, marginTop: "auto", width: '100%' }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={trendData.length ? trendData : [{ time: 'Now', power: 0 }]}>
                         <YAxis domain={['dataMin - 10', 'dataMax + 10']} hide />

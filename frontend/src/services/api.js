@@ -5,6 +5,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 export const http = axios.create({
     baseURL: API_BASE,
     timeout: 300000,  // 5 minutes — ML training on large CSVs takes time
+    validateStatus: (status) => (status >= 200 && status < 300) || status === 333,
 });
 
 http.interceptors.request.use((config) => {
@@ -246,41 +247,12 @@ export const api = {
         return data;
     },
 
-    async askCopilot(prompt, inverterId = null, sessionId = null) {
+    async askCopilot(prompt, inverterId = null) {
         const { data } = await http.post("/api/copilot/chat", {
             question: prompt,
             inverter_id: inverterId || null,
-            sessionId: sessionId || null,
         });
         if (data.error) return { error: data.error };
-        return data;
-    },
-
-    async getChatSessions() {
-        const { data } = await http.get("/api/copilot/sessions");
-        return data;
-    },
-
-    async createChatSession(title) {
-        const { data } = await http.post("/api/copilot/sessions", { title });
-        return data;
-    },
-
-    async getChatSessionMessages(sessionId) {
-        const { data } = await http.get(`/api/copilot/sessions/${sessionId}`);
-        return data;
-    },
-
-    async saveChatMessage(sessionId, role, content) {
-        const { data } = await http.post(`/api/copilot/sessions/${sessionId}/messages`, {
-            role,
-            content,
-        });
-        return data;
-    },
-
-    async deleteChatSession(sessionId) {
-        const { data } = await http.delete(`/api/copilot/sessions/${sessionId}`);
         return data;
     },
 

@@ -1,6 +1,28 @@
 import { useState, useRef, useEffect } from 'react';
 import { api } from '@/services/api';
 import { Plus, Send, User, MessageSquareText, Flame, Zap, Wrench } from 'lucide-react';
+import { Table, TableRow } from '@/components/Table';
+import { Badge } from '@/components/Badge';
+
+function RichCopilotTable({ data }) {
+    if (!Array.isArray(data) || data.length === 0) return null;
+    return (
+        <div style={{ marginTop: 12, marginBottom: 12, border: '1px solid #f1f5f9', borderRadius: 16, overflow: 'hidden' }}>
+            <Table headers={['Inverter ID', 'Status/Risk', 'Key Issue', 'Financial Impact']}>
+                {data.map((row, i) => (
+                    <TableRow key={i} isLast={i === data.length - 1}>
+                        <div style={{ fontWeight: 600, color: '#1e293b' }}>{row.id}</div>
+                        <Badge variant={row.risk >= 80 ? 'Critical' : row.risk >= 50 ? 'Warning' : 'Info'}>
+                            {row.risk}/100
+                        </Badge>
+                        <div style={{ fontSize: 13, color: '#475569' }}>{row.issue}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: '#0f172a' }}>{row.impact}</div>
+                    </TableRow>
+                ))}
+            </Table>
+        </div>
+    );
+}
 
 function renderAssistantContent(content) {
     const raw = String(content || '').trim();
@@ -37,6 +59,29 @@ function renderAssistantContent(content) {
         }
     } catch (_) {
         // Not JSON — render as plain text below
+    }
+
+    // Handle <ui_table> JSON blocks
+    if (raw.includes('<ui_table>')) {
+        const parts = raw.split(/<ui_table>|<\/ui_table>/g);
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {parts.map((p, i) => {
+                    if (i % 2 === 1) { // Inside the tag
+                        try {
+                            const data = JSON.parse(p.trim());
+                            return <RichCopilotTable key={i} data={data} />;
+                        } catch (err) {
+                            return <div key={i} style={{ color: 'red', fontSize: 12 }}>[Table Rendering Error]</div>;
+                        }
+                    }
+                    // Outside the tag (text segments)
+                    const segment = p.replace(/\*\*/g, '').trim();
+                    if (!segment) return null;
+                    return <div key={i} style={{ whiteSpace: 'pre-wrap' }}>{segment}</div>;
+                })}
+            </div>
+        );
     }
 
     const cleaned = raw
@@ -119,7 +164,11 @@ export default function Copilot() {
 
         try {
             const response = await api.askCopilot(prompt);
-            setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+            if (response && response.error) {
+                setMessages((prev) => [...prev, { role: 'assistant', content: response.error }]);
+            } else {
+                setMessages((prev) => [...prev, { role: 'assistant', content: response.answer }]);
+            }
         } catch (_e) {
             setMessages((prev) => [...prev, { role: 'assistant', content: 'I encountered an error querying the telemetry database. Please try again.' }]);
         } finally {

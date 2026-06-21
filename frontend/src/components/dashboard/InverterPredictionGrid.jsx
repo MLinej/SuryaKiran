@@ -42,6 +42,8 @@ const PredictionCell = ({ power, risk }) => {
 export function InverterPredictionGrid({ inverters = [], onUploadClick, refreshTrigger = 0 }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [forecastData, setForecastData] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 5;
 
     useEffect(() => {
         let timeoutId;
@@ -85,6 +87,10 @@ export function InverterPredictionGrid({ inverters = [], onUploadClick, refreshT
     };
 
     const currentMinuteOfDay = currentDate.getHours() * 60 + currentDate.getMinutes();
+
+    // Pagination logic
+    const totalPages = Math.ceil(inverters.length / pageSize);
+    const displayedInverters = inverters.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     return (
         <Card style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#ffffff', overflow: 'hidden' }}>
@@ -135,7 +141,7 @@ export function InverterPredictionGrid({ inverters = [], onUploadClick, refreshT
                                 </td>
                             </tr>
                         ) : (
-                            inverters.map((inv) => {
+                            displayedInverters.map((inv) => {
                                 const fData = forecastData[inv.id];
 
                                 const getPredictionForOffset = (offsetMinutes) => {
@@ -187,6 +193,46 @@ export function InverterPredictionGrid({ inverters = [], onUploadClick, refreshT
                     </tbody>
                 </table>
             </div>
+
+            {totalPages > 1 && (
+                <div style={{ padding: '16px 24px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
+                    <span style={{ fontSize: '13px', color: '#64748b' }}>
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            style={{
+                                padding: '6px 12px',
+                                background: currentPage === 1 ? '#f8fafc' : '#ffffff',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                color: currentPage === 1 ? '#cbd5e1' : '#0f172a'
+                            }}
+                        >
+                            Previous
+                        </button>
+                        <button
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            style={{
+                                padding: '6px 12px',
+                                background: currentPage === totalPages ? '#f8fafc' : '#ffffff',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                color: currentPage === totalPages ? '#cbd5e1' : '#0f172a'
+                            }}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
         </Card>
     );
 }

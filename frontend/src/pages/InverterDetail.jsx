@@ -133,35 +133,39 @@ export default function InverterDetail() {
 
                     {/* Middle Row: Trend & SHAP */}
                     <div style={{ display: "flex", gap: 24, marginBottom: 24, flexWrap: "wrap" }}>
-                        <Card style={{ flex: "2 1 500px", height: 350, display: "flex", flexDirection: "column" }}>
+                        <Card style={{ flex: "2 1 500px", minHeight: 350, display: "flex", flexDirection: "column" }}>
                             <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 24 }}>7-Day Predictive Risk Trend</h3>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={data.predictions} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} domain={[0, 100]} />
-                                    <RechartsTooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }} />
-                                    <Line type="monotone" dataKey="risk" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                                </LineChart>
-                            </ResponsiveContainer>
+                            <div style={{ flex: 1, minHeight: 250 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={data.predictions} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} domain={[0, 100]} />
+                                        <RechartsTooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }} />
+                                        <Line type="monotone" dataKey="risk" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
                         </Card>
 
-                        <Card style={{ flex: "1 1 300px", height: 350, display: "flex", flexDirection: "column" }}>
+                        <Card style={{ flex: "1 1 300px", minHeight: 350, display: "flex", flexDirection: "column" }}>
                             <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Feature Importance (SHAP)</h3>
                             <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#64748b", marginBottom: 24 }}>Top factors contributing to risk score.</p>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart layout="vertical" data={data.shapFeatures} margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                                    <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#475569" }} width={120} />
-                                    <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 12, border: "none" }} />
-                                    <Bar dataKey="contribution" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={16}>
-                                        {data.shapFeatures.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={index === 0 ? "#ef4444" : index === 1 ? "#f59e0b" : "#8b5cf6"} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <div style={{ flex: 1, minHeight: 250 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart layout="vertical" data={data.shapFeatures} margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                                        <XAxis type="number" hide />
+                                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#475569" }} width={120} />
+                                        <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 12, border: "none" }} />
+                                        <Bar dataKey="contribution" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={16}>
+                                            {data.shapFeatures.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={index === 0 ? "#ef4444" : index === 1 ? "#f59e0b" : "#8b5cf6"} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         </Card>
                     </div>
                 </>
@@ -170,9 +174,9 @@ export default function InverterDetail() {
             {/* Bottom Row: Telemetry & Alarms */}
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
 
-                <Card style={{ flex: "1 1 400px", display: "flex", flexDirection: "column" }}>
+                <Card style={{ flex: "1 1 400px", display: "flex", flexDirection: "column", minHeight: 400 }}>
                     <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 24 }}>Live Telemetry (Today)</h3>
-                    <div style={{ height: 300 }}>
+                    <div style={{ flex: 1, minHeight: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={data.telemetry} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />

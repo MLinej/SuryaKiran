@@ -13,38 +13,32 @@ model Inverters {
   block           String
   status          String
   last_updated    DateTime         @default(now())
-  Telemetry       Telemetry[]
-  Predictions     Predictions[]
   Alerts          Alerts[]
-  Maintenance     Maintenance[]
-  ForecastUploads ForecastUpload[]
   ForecastPoints  ForecastPoint[]
+  ForecastUploads ForecastUpload[]
+  Maintenance     Maintenance[]
+  Predictions     Predictions[]
+  Telemetry       Telemetry[]
 }
 
 model Telemetry {
   id                String    @id @default(uuid())
   inverter_id       String
-
-  power_kw          Float
-  pv1_power_kw      Float
-  daily_kwh         Float
-
-  inverter_temp_c   Float
-  ambient_temp_c    Float
-
-  ac_voltage_v      Float
-  dc_voltage_v      Float
-  ac_current_a      Float
-  dc_current_a      Float
-  frequency_hz      Float
-
-  alarm_code        Int
-  op_state          Int
-
-  price_per_kwh_inr Float
-
   timestamp         DateTime  @default(now())
+  ac_current_a      Float
+  ac_voltage_v      Float
+  alarm_code        Int
+  ambient_temp_c    Float
+  daily_kwh         Float
+  dc_current_a      Float
+  dc_voltage_v      Float
   device_timestamp  DateTime?
+  frequency_hz      Float
+  inverter_temp_c   Float
+  op_state          Int
+  power_kw          Float
+  price_per_kwh_inr Float
+  pv1_power_kw      Float
   Inverter          Inverters @relation(fields: [inverter_id], references: [id])
 }
 
@@ -54,17 +48,17 @@ model Predictions {
   risk_score      Float
   risk_level      String
   explanation     String
-  current_status  String?
+  created_at      DateTime  @default(now())
   current_score   Float?
+  current_status  String?
+  daily_table     Json?
   eta_display     String?
   eta_hours       Float?
+  model_output    Json?
+  per_model_probs Json?
   primary_cause   String?
   total_loss_inr  Float?
   total_loss_kwh  Float?
-  per_model_probs String?
-  daily_table     String?
-  model_output    String?
-  created_at      DateTime  @default(now())
   Inverter        Inverters @relation(fields: [inverter_id], references: [id])
 }
 
@@ -73,10 +67,10 @@ model Alerts {
   inverter_id     String
   severity        String
   message         String
-  status          String    @default("Active")
+  created_at      DateTime  @default(now())
   acknowledged_at DateTime?
   dismissed_at    DateTime?
-  created_at      DateTime  @default(now())
+  status          String    @default("Active")
   updated_at      DateTime  @default(now()) @updatedAt
   Inverter        Inverters @relation(fields: [inverter_id], references: [id])
 }
@@ -87,19 +81,21 @@ model Users {
   email            String           @unique
   password         String
   role             String           @default("operator")
+  ChatSession      ChatSession[]
   forecast_uploads ForecastUpload[]
 }
+
 model Maintenance {
   id               String    @id @default(uuid())
   inverter_id      String
   issue            String
   status           String
-  details          String?
-  resolution_notes String?
   scheduled_date   DateTime?
   created_at       DateTime  @default(now())
-  updated_at       DateTime  @default(now()) @updatedAt
+  details          String?
+  resolution_notes String?
   resolved_at      DateTime?
+  updated_at       DateTime  @default(now()) @updatedAt
   Inverter         Inverters @relation(fields: [inverter_id], references: [id])
 }
 
@@ -107,22 +103,22 @@ model Reports {
   id           String   @id @default(uuid())
   title        String
   type         String
-  generated_by String?
   date         DateTime @default(now())
   size         String
+  generated_by String?
 }
 
 model ForecastUpload {
-  id             String         @id @default(uuid())
+  id             String          @id @default(uuid())
   user_id        String
   inverter_id    String?
   csv_content    String
-  rows_count     Int            @default(0)
-  source         String         @default("csv")
-  created_at     DateTime       @default(now())
-  User           Users          @relation(fields: [user_id], references: [id])
-  Inverter       Inverters?     @relation(fields: [inverter_id], references: [id])
+  rows_count     Int             @default(0)
+  source         String          @default("csv")
+  created_at     DateTime        @default(now())
   ForecastPoints ForecastPoint[]
+  Inverter       Inverters?      @relation(fields: [inverter_id], references: [id])
+  User           Users           @relation(fields: [user_id], references: [id])
 }
 
 model ForecastPoint {
@@ -135,9 +131,28 @@ model ForecastPoint {
   risk_score         Float
   source             String          @default("pretrained")
   created_at         DateTime        @default(now())
-  Upload             ForecastUpload? @relation(fields: [upload_id], references: [id])
   Inverter           Inverters       @relation(fields: [inverter_id], references: [id])
+  Upload             ForecastUpload? @relation(fields: [upload_id], references: [id])
 
   @@index([inverter_id, minute_offset])
   @@index([inverter_id, created_at])
+}
+
+model ChatMessage {
+  id          String      @id
+  sessionId   String
+  role        String
+  content     String
+  createdAt   DateTime    @default(now())
+  ChatSession ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model ChatSession {
+  id          String        @id
+  userId      String
+  title       String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  ChatMessage ChatMessage[]
+  Users       Users         @relation(fields: [userId], references: [id])
 }

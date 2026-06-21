@@ -249,7 +249,7 @@ router.get('/all', async (req, res) => {
     } catch (_error) {
         const cached = await getDbForecastAll(inverterId);
         if (!cached) {
-            return res.status(404).json({ error: `No forecast found for ${inverterId}` });
+            return res.status(333).json({ error: "no data in database and ML service" });
         }
         return res.json(cached);
     }
